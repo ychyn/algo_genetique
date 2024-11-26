@@ -157,12 +157,8 @@ for i in range(dbrho.noxide):
         xmax[i]=np.min(xmaxt[:,i])
     # xmax[i]=np.min(xmaxt[:,i])
 #endif
-
-
 xmax[0] = 0
-xmax
 
-dbrho.oxide
 
 # -----------------------------------------------------
 # Generation of random Nglass compositions without V2O3
@@ -181,20 +177,6 @@ xglassn[:,0] = lamb
 
 xglass,xglassn = xglassn,xglass
 
-xglass.sum(axis=1)
-
-'''xglass[:,0] = xglass[:,0]+0.5
-xglass = xglass /1.5
-xglass'''
-
-
-
-# +
-# dbrho.randomcomposition?
-# -
-
-xglass.sum(axis=1)
-
 # ---------------------------------
 # Computation of various properties
 # ---------------------------------
@@ -202,18 +184,12 @@ xglass.sum(axis=1)
 # Computation of rho from the ANN model on molar volume
 # -----------------------------------------------------
 
-dbrho.GlassDensity(nnmolvol,dbrho.oxide,np.array([xglass[0]]))
-
 rho=dbrho.GlassDensity(nnmolvol,dbrho.oxide,xglass)
-
-rho
 
 # Computation of E from the ANN model on Vt
 # -----------------------------------------
 
 E=dbE.YoungModulus(nnmodelEsG,datadisso,dbE.oxide,xglass)
-
-E
 
 # Computation of Tg from the ANN model on Tannealing
 # --------------------------------------------------
@@ -224,8 +200,6 @@ Tg=dbTannealing.physicaly(nnTannealing.model.predict(xglass).transpose()[0,:])
 # ------------------------------------------------
 # #! The last molar fraction is removed since V2O3 is not involved.
 Tmelt=dbTmelt.physicaly(nnTmelt.model.predict(xglass[:,:-1]).transpose()[0,:])
-
-Tmelt
 
 # Computation of Tliq from the ANN model on Tliq
 # ----------------------------------------------
@@ -287,27 +261,56 @@ for i in range(dbrho.noxide):
     if dbrho.oxide[i] in available_mat:
         xmax[i]=np.min(xmaxt[:,i])
 xmax[0] = 0
+
+
+weight=[0,0.5,0,0.5]
+minimize=[True,True,False,False]
 # -
 
+# ## Creation de generations
 
-
-# +
-# Creation de la generation 0
-# -
-
-N_population = 10000
+N_population = 1000
 def init_pop(N_population):
-    
-    
     xglass,Mmolar=dbrho.randomcomposition(N_population,xmax)
-    
-    lamb = np.random.uniform(si_min,si_max,N_population)
-    print(lamb)
+    #x_si est la proportion malaire de SiO2, qu'on impose entre deux valeurs
+    x_si = np.random.uniform(si_min,si_max,N_population)
     for i in range(20):
-        xglass[:,i] = xglass[:,i] * (1 - lamb)
-    xglass[:,0] = lamb
+        xglass[:,i] = xglass[:,i] * (1 - x_si)
+    xglass[:,0] = x_si
     return xglass
 
-xglass
+
+def prop_calculation(population):
+    rho=dbrho.GlassDensity(nnmolvol,dbrho.oxide,population)
+    E=dbE.YoungModulus(nnmodelEsG,datadisso,dbE.oxide,population)
+    Tg=dbTannealing.physicaly(nnTannealing.model.predict(population).transpose()[0,:])
+    Tmelt=dbTmelt.physicaly(nnTmelt.model.predict(population[:,:-1]).transpose()[0,:])
+    return np.vstack((rho,E,Tg,Tmelt)).transpose()
+
+
+def normalize(prop):
+    return (prop - prop.min(axis=0))/(prop.max(axis=0)-prop.min(axis=0))
+
+
+#prop est une array avec les proprietes du verre normalisées, weight est le poids qu'on accorde
+#à chacune des proprietes, et minize est une liste de booléens selon qu'on veuille minimiser
+#ou maximiser une certaine variable
+def fitness_func(prop_normalized,weight,minimize):
+    rating = np.zeros(prop_normalized.shape[0])
+    for i in range(len(weight)):
+        if minimize[i]:
+            rating += (1-prop_normalized[:,i])*weight[i]
+        else:
+            rating += prop_normalized[:,i]*weight[i]
+    return rating
+
+
+population = init_pop(N_population)
+
+prop = prop_calculation(population)
+
+normalized_prop = normalize(prop)
+
+fitness_func(normalized_prop,weight,minimize)
 
 
