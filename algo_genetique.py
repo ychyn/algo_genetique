@@ -6,9 +6,11 @@ This is our oroject mainfile
 """
 
 # %% [markdown]
+# %% [markdown]
 # Modules of python
 # -----------------
 
+# %%
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,18 +18,22 @@ import pandas as pd
 import seaborn as sns
 
 # %% [markdown]
+# %% [markdown]
 # Modules with own classes
 # ------------------------
 
+# %%
 # %%
 from glassdata import GlassData
 from network import NeuralNetwork
 
 # %% [markdown]
+# %% [markdown]
 # ---------------------------------------
 # Data-set on rho and ANN on molar volume
 # ---------------------------------------
 
+# %%
 # %%
 # Dataset of rho
 filedbrho='DataBase/rho20oxides.csv'
@@ -36,12 +42,14 @@ dbrho.info()
 dbrho.bounds()
 
 # %%
+# %%
 # Determination of the molar volume
 dbrho.oxidemolarmass()
 dbrho.molarmass()
 dbrho.y=dbrho.MolarM/dbrho.y
 dbrho.normalize_y()
 
+# %%
 # %%
 # Loading of the ANN model
 arch=[20,20,20]
@@ -52,10 +60,12 @@ nnmolvol.load('Models/nnmolarvol'+nnmolvol.namearch+'.h5')
 nnmolvol.info()
 
 # %% [markdown]
+# %% [markdown]
 # ------------------------------------------------
 # Data-set on Young's modulus and ANN on Vt=E/(2G)
 # ------------------------------------------------
 
+# %%
 # %%
 filedbE='DataBase/E20oxides.csv'
 dbE=GlassData(filedbE)
@@ -63,10 +73,12 @@ dbE.info()
 dbE.bounds()
 
 # %% [markdown]
+# %% [markdown]
 # ------------------------------
 # Loading of dissociation energy
 # ------------------------------
 
+# %%
 # %%
 datadisso=pd.read_csv('dissociationenergy.csv')
 G=np.zeros(dbE.nsample)
@@ -75,15 +87,18 @@ for i in range(dbE.nsample):
 #end for
 
 # %%
+# %%
 # Determination of E/G and normalization
 dbE.y=dbE.y/(2.*G)
 dbE.normalize_y()
 
 # %% [markdown]
+# %% [markdown]
 # ------------------------------
 # Loading of the ANN model on Vt
 # ------------------------------
 
+# %%
 # %%
 arch=[20,20,20]
 nnmodelEsG=NeuralNetwork(dbE.noxide,arch,'gelu','linear')
@@ -93,10 +108,12 @@ nnmodelEsG.load('Models/nnEsG'+nnmodelEsG.namearch+'.h5')
 nnmodelEsG.info()
 
 # %% [markdown]
+# %% [markdown]
 # ---------------------------------------
 # Data-set on Tannealing=Tg and ANN model
 # ---------------------------------------
 
+# %%
 # %%
 # Data-set of Tannealing
 filedbTannealing='DataBase/Tannealing20oxides.csv'
@@ -104,6 +121,7 @@ dbTannealing=GlassData(filedbTannealing)
 dbTannealing.bounds()
 dbTannealing.normalize_y()
 
+# %%
 # %%
 # ANN model on Tannealing
 # -----------------------
@@ -115,9 +133,11 @@ nnTannealing.load('Models/nn'+dbTannealing.nameproperty+nnTannealing.namearch+'.
 nnTannealing.info()
 
 # %% [markdown]
+# %% [markdown]
 # Data-set on Tmelt
 # -----------------
 
+# %%
 # %%
 filedbTmelt='DataBase/Tmelt19oxides.csv'
 dbTmelt=GlassData(filedbTmelt)
@@ -125,6 +145,7 @@ dbTmelt.info()
 dbTmelt.bounds()
 dbTmelt.normalize_y()
 
+# %%
 # %%
 # ANN model on Tmelt
 # ------------------
@@ -136,10 +157,12 @@ nnTmelt.load('Models/nn'+dbTmelt.nameproperty+nnTmelt.namearch+'.h5')
 nnTmelt.info()
 
 # %% [markdown]
+# %% [markdown]
 # ------------------------------
 # Data-set on Tliq and ANN model
 # ------------------------------
 
+# %%
 # %%
 filedbTliq='DataBase\Tsoft20oxides.csv'
 dbTliq=GlassData(filedbTliq)
@@ -147,6 +170,7 @@ dbTliq.info()
 dbTliq.bounds()
 dbTliq.normalize_y()
 
+# %%
 # %%
 # ANN model on Tliq
 # -----------------
@@ -160,16 +184,20 @@ nnTliq.load(modelfile)
 nnTliq.info()
 
 # %% [markdown]
+# %% [markdown]
 # ------------------------------------------
 # Determination of the bounds for each oxide
 # ------------------------------------------
 
 # %% [markdown]
+# %% [markdown]
 # # Algo genetique
 
 # %% [markdown]
+# %% [markdown]
 # ## Variables utiles
 
+# %%
 # %%
 labels = dbrho.oxide
 available_mat = ['SiO2', 'Al2O3', 'MgO', 'CaO', 'Na2O', 'K2O','ZnO', 'TiO2']
@@ -190,8 +218,10 @@ weight=[0,0.5,0,0.5]
 minimize=[True,True,False,False]
 
 # %% [markdown]
+# %% [markdown]
 # ## Creation de generations
 
+# %%
 # %%
 N_population = 1000
 def init_pop(N_population):
@@ -205,6 +235,7 @@ def init_pop(N_population):
 
 
 # %%
+# %%
 def prop_calculation(population):
     rho=dbrho.GlassDensity(nnmolvol,dbrho.oxide,population)
     E=dbE.YoungModulus(nnmodelEsG,datadisso,dbE.oxide,population)
@@ -214,10 +245,12 @@ def prop_calculation(population):
 
 
 # %%
+# %%
 def normalize(prop):
     return (prop - prop.min(axis=0))/(prop.max(axis=0)-prop.min(axis=0))
 
 
+# %%
 # %%
 #prop est une array avec les proprietes du verre normalisées, weight est le poids qu'on accorde
 #à chacune des proprietes, et minize est une liste de booléens selon qu'on veuille minimiser
@@ -233,6 +266,7 @@ def fitness_func(prop_normalized,weight,minimize):
 
 
 # %%
+# %%
 def sort_by_f(population,F):
     population_info = np.column_stack((population,F))
     sorted_arr = population_info[population_info[:, -1].argsort()][::-1]
@@ -240,16 +274,21 @@ def sort_by_f(population,F):
 
 
 # %%
+# %%
 population = init_pop(N_population)
 
+# %%
 # %%
 prop = prop_calculation(population)
 
 # %%
+# %%
 normalized_prop = normalize(prop)
 
 # %%
+# %%
 F = fitness_func(normalized_prop,weight,minimize)
 
+# %%
 # %%
 sorted_arr = sort_by_f(population, F)
