@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-
+This is our oroject mainfile
 """
 
 # Modules of python
@@ -33,12 +33,6 @@ dbrho.oxidemolarmass()
 dbrho.molarmass()
 dbrho.y=dbrho.MolarM/dbrho.y
 dbrho.normalize_y()
-
-# +
-# dbrho?
-# -
-
-
 
 # Loading of the ANN model
 arch=[20,20,20]
@@ -100,11 +94,6 @@ nnTannealing.compile(3.e-4)
 nnTannealing.ArchName(arch)
 nnTannealing.load('Models/nn'+dbTannealing.nameproperty+nnTannealing.namearch+'.h5')
 nnTannealing.info()
-
-# -------------------------------
-# Data-set on Tmelt and ANN Model
-# -------------------------------
-# ! This data-set does not include V2O5. Only 19 oxides are involved.
 
 # Data-set on Tmelt
 # -----------------
@@ -201,48 +190,6 @@ Tg=dbTannealing.physicaly(nnTannealing.model.predict(xglass).transpose()[0,:])
 # #! The last molar fraction is removed since V2O3 is not involved.
 Tmelt=dbTmelt.physicaly(nnTmelt.model.predict(xglass[:,:-1]).transpose()[0,:])
 
-# Computation of Tliq from the ANN model on Tliq
-# ----------------------------------------------
-
-Tliq=dbTliq.physicaly(nnTliq.model.predict(xglass).transpose()[0,:])
-
-# Research of composition
-Tmmin=1000+273.15
-Tmmax=1300.+273.15
-Tgmin=500.+273.15
-Tgmax=600.+273.15
-rhomin=2.4e3
-rhomax=2.9e3
-Emin=70
-#Emax=140
-xcompo=np.zeros(dbE.noxide)
-proglass=np.zeros(4)
-for i in range(len(xglass)):
-    #if (E[i]>Emin and E[i]<Emax and Tg[i]>Tgmin and Tg[i]<Tgmax and 
-    #    rho[i]>rhomin and rho[i]<rhomax and Tmelt[i]>Tmmin and Tmelt[i]<Tmmax):
-    if (Tg[i]>Tgmin and Tg[i]<Tgmax and 
-        rho[i]>rhomin and rho[i]<rhomax and
-        Tmelt[i]>Tmmin and Tmelt[i]<Tmmax and
-        E[i]>Emin):
-        xcompo=np.vstack((xcompo,xglass[i,:]))
-        proglass=np.vstack((proglass,np.hstack(([rho[i],E[i],Tg[i]-273.15,Tmelt[i]-273.15]))))
-        '''if i<1000:
-            print(xcompo, 'xcompo',i)
-            print(proglass,'proglass',i)'''
-    #end if
-#end if
-xcompo=xcompo[1:,:]
-proglass=proglass[1:,:]
-
-XY=np.zeros((np.size(xcompo,0),dbE.noxide+4))
-XY[:,0:dbE.noxide]=xcompo
-XY[:,dbE.noxide:dbE.noxide+4]=proglass
-columns=dbE.oxide
-columns=np.hstack((columns,['rho','E','Tg','Tm']))
-print(XY)
-datacompo=pd.DataFrame(XY,columns=columns,dtype='float')
-datacompo.to_csv('compoverrelowTm_Ivan.csv')
-
 # # Algo genetique
 
 # ## Variables utiles
@@ -305,9 +252,13 @@ def fitness_func(prop_normalized,weight,minimize):
     return rating
 
 
-population = init_pop(N_population)
+def sort_by_f(population,F):
+    population_info = np.column_stack((population,F))
+    sorted_arr = prop_info[population_info[:, -1].argsort()][::-1]
+    return sorted_arr
 
-population
+
+population = init_pop(N_population)
 
 prop = prop_calculation(population)
 
@@ -315,14 +266,4 @@ normalized_prop = normalize(prop)
 
 F = fitness_func(normalized_prop,weight,minimize)
 
-population.shape
-
-F.shape
-
-pop_info = np.column_stack((population,F))
-
-pop_info.shape
-
-
-
-
+sorted_arr
