@@ -16,3 +16,17 @@ def crossover (parents, fitness) :
         w2 = fitness[i2] / (fitness[i1] + fitness[i2]) #poids du parent 2
         enfants.append(w1 * parents[i1] + w2 * parents[i2]) #moyenne pondérée
     return (enfants)
+
+#N_mutants = 0.1 * N_population
+N_nonMutants = 0.9 * N_population
+epsilon = 0.05
+
+def mutation (pop) :
+    for j in range (N_nonMutants, N_population) :
+        iplus = randint(0, 19) #choix de l'oxyde qui gagne epsilon
+        imoins = randint(0, 18) #choix de l'oxyde qui perd epsilon
+        if imoins >= iplus : #problème si deux fois le même oxyde !!
+            imoins += 1
+        pop[j, iplus] = pop[j, iplus] + epsilon
+        pop[j, imoins] = pop[j, imoins] - epsilon
+    return (pop)
