@@ -24,9 +24,9 @@ epsilon = 0.05
 def mutation (pop) :
     for j in range (N_nonMutants, N_population) :
         iplus = randint(0, 19) #choix de l'oxyde qui gagne epsilon
-        imoins = randint(0, 18) #choix de l'oxyde qui perd epsilon
-        if imoins >= iplus : #problème si deux fois le même oxyde !!
-            imoins += 1
+        imoins = randint(0, 19) #choix de l'oxyde qui perd epsilon
+        if imoins == iplus : #problème si deux fois le même oxyde !!
+            imoins = (1 + imoins)%19
         pop[j, iplus] = pop[j, iplus] + epsilon
         pop[j, imoins] = pop[j, imoins] - epsilon
     return (pop)
