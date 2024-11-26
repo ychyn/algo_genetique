@@ -179,7 +179,11 @@ dbrho.oxide
 # -----------------------------------------------------
 
 Nglass=10000
-xglass,Mmolar=dbrho.randomcomposition(Nglass,xmax)
+# ['SiO2', 'B2O3', 'Al2O3', 'MgO', 'CaO', 'BaO', 'Li2O', 'Na2O', 'K2O', 'ZnO', 'SrO', 'PbO', 'Fe2O3', 'Y2O3', 'La2O3', 'TiO2', 'GeO2', 'ZrO2', 'P2O5', 'V2O5']
+xmin = np.zeros(20)
+xmin[0] = 0.3
+xmin[7] = 0.1
+xglass,Mmolar=dbrho.better_random_composition(Nglass,xmin,xmax)
 xglass
 
 xglassn = np.zeros((Nglass,20))
