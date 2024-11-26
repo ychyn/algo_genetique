@@ -138,58 +138,6 @@ nnTliq.info()
 # Determination of the bounds for each oxide
 # ------------------------------------------
 
-xmaxt=np.array([dbrho.xmax,dbE.xmax,dbTannealing.xmax,np.append(dbTmelt.xmax,1.),dbTliq.xmax])
-xmax=np.zeros(dbrho.noxide)
-x_on_a = ['SiO2', 'Al2O3', 'MgO', 'CaO', 'Na2O', 'K2O','ZnO', 'TiO2']
-for i in range(dbrho.noxide):
-    if dbrho.oxide[i] in x_on_a:
-        xmax[i]=np.min(xmaxt[:,i])
-    # xmax[i]=np.min(xmaxt[:,i])
-#endif
-xmax[0] = 0
-
-
-# -----------------------------------------------------
-# Generation of random Nglass compositions without V2O3
-# -----------------------------------------------------
-
-Nglass=10000
-xglass,Mmolar=dbrho.randomcomposition(Nglass,xmax)
-xglass
-
-xglassn = np.zeros((Nglass,20))
-lamb = np.random.uniform(0.35,0.75,Nglass)
-print(lamb)
-for i in range(20):
-    xglassn[:,i] = xglass[:,i] * (1 - lamb)
-xglassn[:,0] = lamb
-
-xglass,xglassn = xglassn,xglass
-
-# ---------------------------------
-# Computation of various properties
-# ---------------------------------
-
-# Computation of rho from the ANN model on molar volume
-# -----------------------------------------------------
-
-rho=dbrho.GlassDensity(nnmolvol,dbrho.oxide,xglass)
-
-# Computation of E from the ANN model on Vt
-# -----------------------------------------
-
-E=dbE.YoungModulus(nnmodelEsG,datadisso,dbE.oxide,xglass)
-
-# Computation of Tg from the ANN model on Tannealing
-# --------------------------------------------------
-
-Tg=dbTannealing.physicaly(nnTannealing.model.predict(xglass).transpose()[0,:])
-
-# Computation of Tmelt from the ANN model on Tmelt
-# ------------------------------------------------
-# #! The last molar fraction is removed since V2O3 is not involved.
-Tmelt=dbTmelt.physicaly(nnTmelt.model.predict(xglass[:,:-1]).transpose()[0,:])
-
 # # Algo genetique
 
 # ## Variables utiles
@@ -254,7 +202,7 @@ def fitness_func(prop_normalized,weight,minimize):
 
 def sort_by_f(population,F):
     population_info = np.column_stack((population,F))
-    sorted_arr = prop_info[population_info[:, -1].argsort()][::-1]
+    sorted_arr = population_info[population_info[:, -1].argsort()][::-1]
     return sorted_arr
 
 
@@ -266,4 +214,4 @@ normalized_prop = normalize(prop)
 
 F = fitness_func(normalized_prop,weight,minimize)
 
-sorted_arr
+sorted_arr = sort_by_f(population, F)
