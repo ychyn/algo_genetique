@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Created on Mon Jun 17 13:41:41 2024
 
+Example program to determine:
+    
+    -rho: density (kg/m3)
+    -E: Young's modulus (GPa)
+    -Tmelt: Melting temperature corresponding to log(eta)=1 (K)
+    -Tg: Glass tansition temperature defined by log(eta)=12 (K)
+    -Tliq: Liquidus temperature (K)
+
+@author: fpigeonneau
 """
 
 # Modules of python
@@ -232,6 +242,26 @@ Tmelt
 
 Tliq=dbTliq.physicaly(nnTliq.model.predict(xglass).transpose()[0,:])
 
+Tliq
+
+# Graphical representation
+# ------------------------
+Plot=True
+
+'''if (Plot):
+    fig1,ax1=plt.subplots()
+    data1=pd.DataFrame(np.transpose(np.array([rho,E])),columns=['rho','E'])
+    sns.kdeplot(data1,x='rho',y='E',color='k',fill=True,ax=ax1,alpha=0.5)
+    
+    fig2,ax2=plt.subplots()
+    data2=pd.DataFrame(np.transpose(np.array([Tmelt,Tg])),columns=['Tmelt','Tg'])
+    sns.kdeplot(data2,x='Tmelt',y='Tg',color='k',fill=True,ax=ax2,alpha=0.5)
+#end if'''
+
+# +
+# dbE?
+# -
+
 # Research of composition
 Tmmin=1000+273.15
 Tmmax=1300.+273.15
@@ -260,6 +290,16 @@ for i in range(len(xglass)):
 xcompo=xcompo[1:,:]
 proglass=proglass[1:,:]
 
+'''if (Plot):
+    data1=pd.DataFrame(np.transpose(np.array([proglass[:,0],proglass[:,1]])),columns=['rho','E'])
+    sns.kdeplot(data1,x='rho',y='E',color='b',fill=True,ax=ax1,alpha=0.5)
+        
+    data2=pd.DataFrame(np.transpose(np.array([proglass[:,3],proglass[:,2]])),columns=['Tmelt','Tg'])
+    sns.kdeplot(data2,x='Tmelt',y='Tg',color='b',fill=True,ax=ax2,alpha=0.5)
+
+    plt.show()
+#end if'''
+
 XY=np.zeros((np.size(xcompo,0),dbE.noxide+4))
 XY[:,0:dbE.noxide]=xcompo
 XY[:,dbE.noxide:dbE.noxide+4]=proglass
@@ -269,45 +309,4 @@ print(XY)
 datacompo=pd.DataFrame(XY,columns=columns,dtype='float')
 datacompo.to_csv('compoverrelowTm_Ivan.csv')
 
-# # Algo genetique
-
-# ## Variables utiles
-
-# +
-labels = dbrho.oxide
-available_mat = ['SiO2', 'Al2O3', 'MgO', 'CaO', 'Na2O', 'K2O','ZnO', 'TiO2']
-
-#Contraintes
-si_min = 0.35
-si_max = 0.75
-
-xmaxt=np.array([dbrho.xmax,dbE.xmax,dbTannealing.xmax,np.append(dbTmelt.xmax,1.),dbTliq.xmax])
-xmax=np.zeros(dbrho.noxide)
-for i in range(dbrho.noxide):
-    if dbrho.oxide[i] in available_mat:
-        xmax[i]=np.min(xmaxt[:,i])
-xmax[0] = 0
-# -
-
-
-
-# +
-# Creation de la generation 0
-# -
-
-N_population = 10000
-def init_pop(N_population):
-    
-    
-    xglass,Mmolar=dbrho.randomcomposition(N_population,xmax)
-    
-    lamb = np.random.uniform(si_min,si_max,N_population)
-    print(lamb)
-    for i in range(20):
-        xglass[:,i] = xglass[:,i] * (1 - lamb)
-    xglass[:,0] = lamb
-    return xglass
-
-xglass
-
-
+datacompo
