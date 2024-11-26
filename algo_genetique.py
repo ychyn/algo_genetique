@@ -262,7 +262,7 @@ for i in range(dbrho.noxide):
         xmax[i]=np.min(xmaxt[:,i])
 xmax[0] = 0
 
-
+prop_label = ['rho','E','Tg','Tmelt']
 weight=[0,0.5,0,0.5]
 minimize=[True,True,False,False]
 # -
@@ -307,10 +307,22 @@ def fitness_func(prop_normalized,weight,minimize):
 
 population = init_pop(N_population)
 
+population
+
 prop = prop_calculation(population)
 
 normalized_prop = normalize(prop)
 
-fitness_func(normalized_prop,weight,minimize)
+F = fitness_func(normalized_prop,weight,minimize)
+
+population.shape
+
+F.shape
+
+pop_info = np.column_stack((population,F))
+
+pop_info.shape
+
+
 
 
