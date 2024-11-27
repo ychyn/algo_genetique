@@ -946,6 +946,8 @@ class GlassData():
         if (self.Moxide is None):
             self.oxidemolarmass()
         #end if
+        xmax = xmax.copy()
+        xmax[-1] = 0
         xglass=np.zeros((Nglass,self.noxide))
         Mmolar=np.zeros(Nglass)
         for n in range(Nglass):
