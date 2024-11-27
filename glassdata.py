@@ -955,13 +955,13 @@ class GlassData():
             weights = np.random.random(self.noxide)
             weights **= power
             deltas = np.array(xmax) - np.array(xmin)
-            total = np.sum(xmin)
+            total = xmin.sum()
             xglass[n, :] = xmin
             to_add = deltas * weights
-            while to_add < (1 - total):
+            while to_add.sum() < (1 - total):
                 weights **= 0.5
                 to_add = deltas * weights
-            to_add = (to_add / np.sum(to_add)) * (1 - total)
+            to_add = (to_add / to_add.sum()) * (1 - total)
             xglass[n,:] += to_add
             # Molar mass of glasses
             # ---------------------
