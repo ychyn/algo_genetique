@@ -8,7 +8,7 @@ On utilise l'outil de prediction des propriétés du verre à travers des résea
 
 ### Fichier glassdata.py
 
-- `GlassData.better_random_composition(self,Nglass,xmin,xmax) -> tuple[ndarray[float64], ndarray[float64]]` \
+- `GlassData.better_random_composition(self,Nglass,xmin,xmax)`  
 Renvoie `Nglass` couples du type `(composition, masse_molaire)` où la composition est représentée par un tableau de fractions molaires de chaque oxyde. Ces fractions vérifient `xmin[i] < composition[i] < xmax[i]`
 
 ### Fichier algo_genetique.ipynb
