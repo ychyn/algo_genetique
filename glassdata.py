@@ -942,6 +942,32 @@ class GlassData():
         return xglass,Mmolar
     #end randomcomposition
 
+    def better_random_composition(self,Nglass,xmin,xmax):
+        if (self.Moxide is None):
+            self.oxidemolarmass()
+        #end if
+        xmax = xmax.copy()
+        xmax[-1] = 0
+        xglass=np.zeros((Nglass,self.noxide))
+        Mmolar=np.zeros(Nglass)
+        for n in range(Nglass):
+            weights = np.random.random(self.noxide)
+            deltas = np.array(xmax) - np.array(xmin)
+            total = np.sum(xmin)
+            xglass[n, :] = xmin
+            to_add = deltas * weights
+            to_add = (to_add / np.sum(to_add)) * (1 - total)
+            xglass[n,:] += to_add
+            # Molar mass of glasses
+            # ---------------------
+            Mmolar[n]=np.sum(xglass[n,:]*self.Moxide)
+        #end for
+    
+        # Return of xglass and Mmolar
+        return xglass,Mmolar
+    #end randomcomposition
+
+
     # ------------
     # GlassDensity
     # ------------
