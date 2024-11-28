@@ -3,8 +3,8 @@ import numpy as np
 
 N_population = 1000
 
-N_parents = int(0.1 * N_population)
-N_enfants = int(0.4 * N_population)
+N_parents = int(0.2 * N_population)
+N_enfants = int(0.1 * N_population)
 
 def parentcontest (parents,strategie) :
     #Dans parents chaque individu est représenté par 21 floats dont le dernier est la valeur de fitness
@@ -25,5 +25,4 @@ def parentcontest (parents,strategie) :
         return (np.array(moms),np.array(dads))
     #Fallback
     return (np.random.shuffle(parents)[:N_enfants],np.random.shuffle(parents)[:N_enfants])
-    
 
