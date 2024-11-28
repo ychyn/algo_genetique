@@ -36,3 +36,49 @@ def mutation (mutants) :
             mutants[j, iplus] = mutantPlus + epsilon
             mutants[j, imoins] = mutantMoins - epsilon
     return (mutants)
+
+
+# températures de fusion des oxydes (en °C) : 
+# [1610, 2045, 2852, 2580]
+# dureté des oxydes :
+# [7, 9, 5.5]
+# TiO2 est un agent nucléant utilisé pour les plaques vitrocéramiques (très faible coeff de dilatation thermique).
+# source : L'élémentarium
+
+# fondants = ['Na2O', 'K2O', 'MgO']
+# stabilisants = ['CaO', 'ZnO']
+# ZnO augmente l'élasticité
+# source : https://lasirene.e-monsite.com/pages/le-verre/-.html
+
+# formateurs = ['SiO2']
+# SiO2 augmente la dureté du verre
+# fondants = ['Na2O', 'K2O', 'MgO']
+# stabilisants = ['CaO', 'ZnO']
+# source : https://infovitrail.com/contenu.php/fr/d/---la-composition-du-verre/e9b609c9-91f5-4a08-86a6-6112dc12b66d
+
+# fondants = ['Na2O', 'K2O'] + ['CaO', 'MgO'] (mais moins bien que les deux premiers)
+# modificateurs = ['CaO', 'MgO', 'Al2O3'] #augmentent les propriétés de durabilité chimique et mécanique (E ??)
+# formateurs = ['SiO2'] #essentiels
+# source : Franck
+
+fondants = [False, False, True, True, True, True, False, False] # diminuent Tm
+durability = [True, True, False, False, False, False, False, False] #augmentent E
+other = [False, False, False, False, False, False, True, True]
+
+def crossover (mom, dad) :
+    childs = np.zeros((N_childs, len(mom[0])))
+    for i in range (N_childs) :
+        if mom[i][21] < dad[i][21] : #choix du meilleur E
+            bestE = dad[i]
+        else :
+            bestE = mom[i]
+        if mom[i][23] < dad[i][23] : #choix du meilleur Tm
+            bestTm = mom[i]
+        else :
+            bestTm = dad[i]
+        childs[i][fondants] = bestTm[fondants]
+        childs[i][durability] = bestE[durability]
+        childs[i][other] = (mom[i][other] + dad[i][other])/2
+        sum = np.sum(childs[i])
+        childs[i] = childs[i] / sum
+    return (childs)
