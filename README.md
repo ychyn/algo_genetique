@@ -36,4 +36,6 @@ Renvoie un tableau de valeurs de fitness associés à chaque verre. Les paramèt
     - `weight` est le poids qu'on accorde à chacune des propriétés
     - `minimize` est une liste de booléens qui vaut `True` si on veut minimiser la variable et `False` si on veut la maximiser
 - `sort_by_f(population,F)`  
-Renvoie la population triée dans l'ordre croissant de F
+Renvoie la population triée dans l'ordre décroissant de `F` en rajoutant la valeur de `F` en dernière case
+- `compute(population)`
+Renvoie la population triée dans l'ordre décroissant de `fitness_func`
