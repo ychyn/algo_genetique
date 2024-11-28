@@ -14,7 +14,7 @@ def parentcontest (parents,strategie) :
         dads =[]
         moms =[]
         for i in range(N_enfants):
-            t = np.random.choice(parents,N_tournament*2)
+            t = np.array([parents[i,:] for i in np.random.choice(N_parents,N_tournament*2)])
             dad = t[np.argmax(t[:N_tournament,-1])]
             mom = t[np.argmax(t[N_tournament:,-1])]
             dads.append(dad)
