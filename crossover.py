@@ -4,20 +4,20 @@ import numpy as np
 N_population = 1000
 
 N_parents = int(0.1 * N_population)
-N_enfants = int(0.4 * N_population)
+N_childs = int(0.4 * N_population)
 
 def crossover (parents) :
     #Dans parents chaque individu est représenté par 21 floats dont le dernier est la valeur de fitness
-    enfants = np.array([[0.] * 21] * N_enfants)
-    for i in range (N_enfants) :
+    childs = np.array([[0.] * 21] * N_childs)
+    for i in range (N_childs) :
         i1 = randint(0, N_parents-1)
         i2 = randint(0, N_parents-2)
         if i2 == i1 : #problème si deux fois le même parent !!
             i2 += 1
         w1 = parents[i1, 20] / (parents[i1, 20] + parents[i2, 20]) #poids du parent 1
         w2 = parents[i2, 20] / (parents[i1, 20] + parents[i2, 20]) #poids du parent 2
-        enfants[i] = (w1 * parents[i1] + w2 * parents[i2]) #moyenne pondérée
-    return (enfants)
+        childs[i] = (w1 * parents[i1] + w2 * parents[i2]) #moyenne pondérée
+    return (childs)
 
 N_mutants = int(0.1 * N_population)
 epsilon = 0.05
