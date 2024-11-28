@@ -8,7 +8,10 @@ N_enfants = int(0.4 * N_population)
 
 def parentcontest (parents,strategie) :
     #Dans parents chaque individu est représenté par 21 floats dont le dernier est la valeur de fitness
-    
+    if strategie =='China' and N_parents>= 2*N_enfants:
+        dads = parents[::2]
+        moms = parents[1::2]
+        return (np.array(moms[:N_enfants]),np.array(dads[:N_enfants]))    
     if strategie =='tournament':
         N_tournament =5
         dads =[]
@@ -20,6 +23,7 @@ def parentcontest (parents,strategie) :
             dads.append(dad)
             moms.append(mom)
         return (np.array(moms),np.array(dads))
-
+    #Fallback
+    return (np.random.shuffle(parents)[:N_enfants],np.random.shuffle(parents)[:N_enfants])
     
 
