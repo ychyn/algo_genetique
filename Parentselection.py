@@ -17,12 +17,14 @@ def parentcontest (parents,strategie) :
         dads =[]
         moms =[]
         for i in range(N_enfants):
-            t = np.array([parents[i,:] for i in np.random.choice(N_parents,N_tournament*2)])
+            t = np.array([parents[i,:] for i in np.random.choice(N_parents,N_enfants)])
             dad = t[np.argmax(t[:N_tournament,-1])]
             mom = t[np.argmax(t[N_tournament:,-1])]
             dads.append(dad)
             moms.append(mom)
         return (np.array(moms),np.array(dads))
     #Fallback
-    return (np.random.shuffle(parents)[:N_enfants],np.random.shuffle(parents)[:N_enfants])
-
+    t = np.array([parents[i] for i in np.random.choice(N_parents,N_enfants*2)])
+    return (np.array(t[N_enfants:]),np.array(t[:N_enfants]))
+    
+print(parentcontest(np.ones((N_parents,21)),''))
