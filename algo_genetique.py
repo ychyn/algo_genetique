@@ -312,9 +312,9 @@ epsilon = 0.05
 # ## Creation de generations
 
 initial_pop = data.init_pop(N_population)
-compositions = data.evolution(N_generations)
+final_pop = data.evolution(N_generations)
 
-df = pd.DataFrame(compositions,columns=columns)
+df = pd.DataFrame(final_pop,columns=columns)
 
 df.to_csv('generation_final.csv')
 
