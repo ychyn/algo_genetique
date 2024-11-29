@@ -58,7 +58,7 @@ def default_mutation (mutants, xmin, xmax) :
             mutants[j, imoins] = mutantMoins - epsilon
     return (mutants)
 
-class Data():
+class EvolutionModel():
 
     def __init__(self):
         self.dbrho = None
@@ -277,7 +277,7 @@ class Data():
 
 # ## Variables utiles
 
-data = Data()
+data = EvolutionModel()
 data.load()
 
 labels = data.dbrho.oxide
