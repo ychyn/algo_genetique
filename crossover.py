@@ -6,18 +6,18 @@ N_population = 1000
 N_parents = int(0.1 * N_population)
 N_childs = int(0.4 * N_population)
 
-def crossover (parents) :
-    #Dans parents chaque individu est représenté par 21 floats dont le dernier est la valeur de fitness
-    childs = np.array([[0.] * 21] * N_childs)
-    for i in range (N_childs) :
-        i1 = randint(0, N_parents-1)
-        i2 = randint(0, N_parents-2)
-        if i2 == i1 : #problème si deux fois le même parent !!
-            i2 += 1
-        w1 = parents[i1, 20] / (parents[i1, 20] + parents[i2, 20]) #poids du parent 1
-        w2 = parents[i2, 20] / (parents[i1, 20] + parents[i2, 20]) #poids du parent 2
-        childs[i] = (w1 * parents[i1] + w2 * parents[i2]) #moyenne pondérée
-    return (childs)
+# def crossover (parents) :
+#     #Dans parents chaque individu est représenté par 21 floats dont le dernier est la valeur de fitness
+#     childs = np.array([[0.] * 21] * N_childs)
+#     for i in range (N_childs) :
+#         i1 = randint(0, N_parents-1)
+#         i2 = randint(0, N_parents-2)
+#         if i2 == i1 : #problème si deux fois le même parent !!
+#             i2 += 1
+#         w1 = parents[i1, 20] / (parents[i1, 20] + parents[i2, 20]) #poids du parent 1
+#         w2 = parents[i2, 20] / (parents[i1, 20] + parents[i2, 20]) #poids du parent 2
+#         childs[i] = (w1 * parents[i1] + w2 * parents[i2]) #moyenne pondérée
+#     return (childs)
 
 N_mutants = int(0.1 * N_population)
 epsilon = 0.05
@@ -65,20 +65,32 @@ fondants = [False, False, False, True, True, False, False, True, True, False, Fa
 durability = [True, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False] #augmentent E
 other = [False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False]
 
+# def crossover (mom, dad) :
+#     childs = np.zeros((len(mom), len(mom[0])))
+#     for i in range (N_childs) :
+#         if mom[i, 21] < dad[i, 21] : #choix du meilleur E
+#             bestE = dad[i]
+#         else :
+#             bestE = mom[i]
+#         if mom[i, 23] < dad[i, 23] : #choix du meilleur Tm
+#             bestTm = mom[i]
+#         else :
+#             bestTm = dad[i]
+#         childs[i][fondants] = bestTm[fondants]
+#         childs[i][durability] = bestE[durability]
+#         childs[i][other] = (mom[i][other] + dad[i][other])/2
+#         sum = np.sum(childs[i])
+#         childs[i] = childs[i] / sum
+#     return (childs)
+
 def crossover (mom, dad) :
     childs = np.zeros((len(mom), len(mom[0])))
     for i in range (N_childs) :
-        if mom[i, 21] < dad[i, 21] : #choix du meilleur E
-            bestE = dad[i]
-        else :
-            bestE = mom[i]
-        if mom[i, 23] < dad[i, 23] : #choix du meilleur Tm
-            bestTm = mom[i]
-        else :
-            bestTm = dad[i]
-        childs[i][fondants] = bestTm[fondants]
-        childs[i][durability] = bestE[durability]
+        wMomTm = mom[i, 23] / (mom[i, 23] + dad[i, 23])
+        wDadTm = dad[i, 23] / (mom[i, 23] + dad[i, 23])
+        wMomE = mom[i, 21] / (mom[i, 21] + dad[i, 21])
+        wDadE = dad[i, 21] / (mom[i, 21] + dad[i, 21])
+        childs[i][fondants] = wMomTm * mom[i][fondants] + wDadTm * dad[i][fondants]
+        childs[i][durability] = wMomE * mom[i][durability] + wDadE * dad[i][durability]
         childs[i][other] = (mom[i][other] + dad[i][other])/2
-        sum = np.sum(childs[i])
-        childs[i] = childs[i] / sum
     return (childs)
