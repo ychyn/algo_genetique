@@ -14,118 +14,134 @@ from network import NeuralNetwork
 # Data-set on rho and ANN on molar volume
 # ---------------------------------------
 
-# Dataset of rho
-filedbrho='DataBase/rho20oxides.csv'
-dbrho=GlassData(filedbrho)
-dbrho.info()
-dbrho.bounds()
+class Data():
 
-# Determination of the molar volume
-dbrho.oxidemolarmass()
-dbrho.molarmass()
-dbrho.y=dbrho.MolarM/dbrho.y
-dbrho.normalize_y()
+    def __init__(self):
+        self.dbrho = None
+        self.nnmolvol = None
+        self.dbE = None
+        self.dbTannealing = None
+        self.nnmodelEsG = None
+        self.dbTmelt = None
+        self.nnTmelt = None
+        self.dbTliq = None
+        self.nnTliq = None
+        self.datadisso = None
 
-# Loading of the ANN model
-arch=[20,20,20]
-nnmolvol=NeuralNetwork(dbrho.noxide,arch,'gelu','linear')
-nnmolvol.compile(3.e-4)
-nnmolvol.ArchName(arch)
-nnmolvol.load('Models/nnmolarvol'+nnmolvol.namearch+'.h5')
-nnmolvol.info()
+    def load(self):
+        
+        # Dataset of rho
+        filedbrho='DataBase/rho20oxides.csv'
+        self.dbrho=GlassData(filedbrho)
+        self.dbrho.info()
+        self.dbrho.bounds()
 
-# ------------------------------------------------
-# Data-set on Young's modulus and ANN on Vt=E/(2G)
-# ------------------------------------------------
+        # Determination of the molar volume
+        self.dbrho.oxidemolarmass()
+        self.dbrho.molarmass()
+        self.dbrho.y=self.dbrho.MolarM/self.dbrho.y
+        self.dbrho.normalize_y()
 
-filedbE='DataBase/E20oxides.csv'
-dbE=GlassData(filedbE)
-dbE.info()
-dbE.bounds()
+        # Loading of the ANN model
+        arch=[20,20,20]
+        self.nnmolvol=NeuralNetwork(self.dbrho.noxide,arch,'gelu','linear')
+        self.nnmolvol.compile(3.e-4)
+        self.nnmolvol.ArchName(arch)
+        self.nnmolvol.load('Models/nnmolarvol'+self.nnmolvol.namearch+'.h5')
+        self.nnmolvol.info()
 
-# ------------------------------
-# Loading of dissociation energy
-# ------------------------------
+        # ------------------------------------------------
+        # Data-set on Young's modulus and ANN on Vt=E/(2G)
+        # ------------------------------------------------
 
-datadisso=pd.read_csv('dissociationenergy.csv')
-G=np.zeros(dbE.nsample)
-for i in range(dbE.nsample):
-    G[i]=np.sum(datadisso['G'].values*dbE.x[i,:])
-#end for
+        filedbE='DataBase/E20oxides.csv'
+        self.dbE=GlassData(filedbE)
+        self.dbE.info()
+        self.dbE.bounds()
 
-# Determination of E/G and normalization
-dbE.y=dbE.y/(2.*G)
-dbE.normalize_y()
+        # ------------------------------
+        # Loading of dissociation energy
+        # ------------------------------
 
-# ------------------------------
-# Loading of the ANN model on Vt
-# ------------------------------
+        self.datadisso=pd.read_csv('dissociationenergy.csv')
+        G=np.zeros(self.dbE.nsample)
+        for i in range(self.dbE.nsample):
+            G[i]=np.sum(self.datadisso['G'].values*self.dbE.x[i,:])
+        #end for
 
-arch=[20,20,20]
-nnmodelEsG=NeuralNetwork(dbE.noxide,arch,'gelu','linear')
-nnmodelEsG.compile(1.e-4)
-nnmodelEsG.ArchName(arch)
-nnmodelEsG.load('Models/nnEsG'+nnmodelEsG.namearch+'.h5')
-nnmodelEsG.info()
+        # Determination of E/G and normalization
+        self.dbE.y=self.dbE.y/(2.*G)
+        self.dbE.normalize_y()
 
-# ---------------------------------------
-# Data-set on Tannealing=Tg and ANN model
-# ---------------------------------------
+        # ------------------------------
+        # Loading of the ANN model on Vt
+        # ------------------------------
 
-# Data-set of Tannealing
-filedbTannealing='DataBase/Tannealing20oxides.csv'
-dbTannealing=GlassData(filedbTannealing)
-dbTannealing.bounds()
-dbTannealing.normalize_y()
+        arch=[20,20,20]
+        self.nnmodelEsG=NeuralNetwork(self.dbE.noxide,arch,'gelu','linear')
+        self.nnmodelEsG.compile(1.e-4)
+        self.nnmodelEsG.ArchName(arch)
+        self.nnmodelEsG.load('Models/nnEsG'+self.nnmodelEsG.namearch+'.h5')
+        self.nnmodelEsG.info()
 
-# ANN model on Tannealing
-# -----------------------
-arch=[20,20,20]
-nnTannealing=NeuralNetwork(dbTannealing.noxide,arch,'gelu','linear')
-nnTannealing.compile(3.e-4)
-nnTannealing.ArchName(arch)
-nnTannealing.load('Models/nn'+dbTannealing.nameproperty+nnTannealing.namearch+'.h5')
-nnTannealing.info()
+        # ---------------------------------------
+        # Data-set on Tannealing=Tg and ANN model
+        # ---------------------------------------
 
-# Data-set on Tmelt
-# -----------------
+        # Data-set of Tannealing
+        filedbTannealing='DataBase/Tannealing20oxides.csv'
+        self.dbTannealing=GlassData(filedbTannealing)
+        self.dbTannealing.bounds()
+        self.dbTannealing.normalize_y()
 
-filedbTmelt='DataBase/Tmelt19oxides.csv'
-dbTmelt=GlassData(filedbTmelt)
-dbTmelt.info()
-dbTmelt.bounds()
-dbTmelt.normalize_y()
+        # ANN model on Tannealing
+        # -----------------------
+        arch=[20,20,20]
+        self.nnTannealing=NeuralNetwork(self.dbTannealing.noxide,arch,'gelu','linear')
+        self.nnTannealing.compile(3.e-4)
+        self.nnTannealing.ArchName(arch)
+        self.nnTannealing.info()
+        self.nnTannealing.load('Models/nn'+self.dbTannealing.nameproperty+self.nnTannealing.namearch+'.h5')
 
-# ANN model on Tmelt
-# ------------------
-arch=[20,20,20]
-nnTmelt=NeuralNetwork(dbTmelt.noxide,arch,'gelu','linear')
-nnTmelt.compile(3.e-4)
-nnTmelt.ArchName(arch)
-nnTmelt.load('Models/nn'+dbTmelt.nameproperty+nnTmelt.namearch+'.h5')
-nnTmelt.info()
+        # Data-set on Tmelt
+        # -----------------
 
-# ------------------------------
-# Data-set on Tliq and ANN model
-# ------------------------------
+        filedbTmelt='DataBase/Tmelt19oxides.csv'
+        self.dbTmelt=GlassData(filedbTmelt)
+        self.dbTmelt.info()
+        self.dbTmelt.bounds()
+        self.dbTmelt.normalize_y()
 
-filedbTliq='DataBase\Tsoft20oxides.csv'
-dbTliq=GlassData(filedbTliq)
-dbTliq.info()
-dbTliq.bounds()
-dbTliq.normalize_y()
+        # ANN model on Tmelt
+        # ------------------
+        arch=[20,20,20]
+        self.nnTmelt=NeuralNetwork(self.dbTmelt.noxide,arch,'gelu','linear')
+        self.nnTmelt.compile(3.e-4)
+        self.nnTmelt.ArchName(arch)
+        self.nnTmelt.load('Models/nn'+self.dbTmelt.nameproperty+self.nnTmelt.namearch+'.h5')
+        self.nnTmelt.info()
 
-# ANN model on Tliq
-# -----------------
+        # ------------------------------
+        # Data-set on Tliq and ANN model
+        # ------------------------------
 
-arch=[32,32,32,32]
-nnTliq=NeuralNetwork(dbTliq.noxide,arch,'gelu','linear')
-nnTliq.compile(3.e-4)
-nnTliq.ArchName(arch)
-#modelfile='Models\nn'+dbTliq.nameproperty+nnTliq.namearch+'.h5'
-modelfile='Models/nnTsoft3c20.h5'
-nnTliq.load(modelfile)
-nnTliq.info()
+        filedbTliq='DataBase\Tsoft20oxides.csv'
+        self.dbTliq=GlassData(filedbTliq)
+        self.dbTliq.info()
+        self.dbTliq.bounds()
+        self.dbTliq.normalize_y()
+
+        # ANN model on Tliq
+        # -----------------
+
+        arch=[32,32,32,32]
+        self.nnTliq=NeuralNetwork(self.dbTliq.noxide,arch,'gelu','linear')
+        self.nnTliq.compile(3.e-4)
+        self.nnTliq.ArchName(arch)
+        #modelfile='Models\nn'+dbTliq.nameproperty+nnTliq.namearch+'.h5'
+        modelfile='Models/nnTsoft3c20.h5'
+        self.nnTliq.load(modelfile)
+        self.nnTliq.info()
 
 # ------------------------------------------
 # Determination of the bounds for each oxide
@@ -135,7 +151,10 @@ nnTliq.info()
 
 # ## Variables utiles
 
-labels = dbrho.oxide
+data = Data()
+data.load()
+
+labels = data.dbrho.oxide
 N_oxides = len(labels)
 available_mat = ['SiO2', 'Al2O3', 'MgO', 'CaO', 'Na2O', 'K2O','ZnO', 'TiO2']
 prop_label = ['rho','E','Tg','Tmelt']
@@ -143,15 +162,15 @@ columns = list(labels)+prop_label+['F']
 
 #Contraintes
 
-xmaxt=np.array([dbrho.xmax,dbE.xmax,dbTannealing.xmax,np.append(dbTmelt.xmax,1.),dbTliq.xmax])
-xmax=np.zeros(dbrho.noxide)
-for i in range(dbrho.noxide):
-    if dbrho.oxide[i] in available_mat:
+xmaxt=np.array([data.dbrho.xmax,data.dbE.xmax,data.dbTannealing.xmax,np.append(data.dbTmelt.xmax,1.),data.dbTliq.xmax])
+xmax=np.zeros(data.dbrho.noxide)
+for i in range(data.dbrho.noxide):
+    if data.dbrho.oxide[i] in available_mat:
         xmax[i]=np.min(xmaxt[:,i])
 
-xmin = np.zeros(dbrho.noxide)
-xmin[list(dbrho.oxide).index('SiO2')] = 0.35
-xmin[list(dbrho.oxide).index('Na2O')] = 0.1
+xmin = np.zeros(data.dbrho.noxide)
+xmin[list(data.dbrho.oxide).index('SiO2')] = 0.35
+xmin[list(data.dbrho.oxide).index('Na2O')] = 0.1
 
 #Parametres fitness function
 
@@ -177,11 +196,11 @@ epsilon = 0.05
 
 # ## Creation de generations
 
-def prop_calculation(composition):
-    rho=dbrho.GlassDensity(nnmolvol,dbrho.oxide,composition)
-    E=dbE.YoungModulus(nnmodelEsG,datadisso,dbE.oxide,composition)
-    Tg=dbTannealing.physicaly(nnTannealing.model.predict(composition).transpose()[0,:])
-    Tmelt=dbTmelt.physicaly(nnTmelt.model.predict(composition[:,:-1]).transpose()[0,:])
+def prop_calculation(composition, data):
+    rho=data.dbrho.GlassDensity(data.nnmolvol,data.dbrho.oxide,composition)
+    E=data.dbE.YoungModulus(data.nnmodelEsG,data.datadisso,data.dbE.oxide,composition)
+    Tg=data.dbTannealing.physicaly(data.nnTannealing.model.predict(composition).transpose()[0,:])
+    Tmelt=data.dbTmelt.physicaly(data.nnTmelt.model.predict(composition[:,:-1]).transpose()[0,:])
     return np.vstack((rho,E,Tg,Tmelt)).transpose()
 
 def normalize(prop):
@@ -208,23 +227,21 @@ def stack_by_f(population,properties,F):
     sorted_arr = population_info[population_info[:, -1].argsort()][::-1]
     return sorted_arr
 
-def init_properties(population):
-    prop = prop_calculation(population)
+def init_properties(population, data):
+    prop = prop_calculation(population, data)
     normalized_prop = normalize(prop)
     F = fitness_func(normalized_prop,weight,minimize)
     sorted_arr = stack_by_f(population, prop, F)
     return sorted_arr
 
-def compute_properties(generation):
-    population_sorted = init_properties(generation[:, :20])
+def compute_properties(generation, data):
+    population_sorted = init_properties(generation[:, :20], data)
     return population_sorted
 
-def init_pop(N_population):
-    population,_=dbrho.better_random_composition(N_population,xmin,xmax)
-    population = init_properties(population)
+def init_pop(N_population, data):
+    population,_=data.dbrho.better_random_composition(N_population,xmin,xmax)
+    population = init_properties(population, data)
     return population
-
-old_generation = init_pop(N_population)
 
 def population_selection(generation):
     survivors = generation[:int(N_population*survivor_rate)]
@@ -259,21 +276,21 @@ def mutation (mutants) :
             mutants[j, imoins] = mutantMoins - epsilon
     return (mutants)
 
-def new_generation(old_generation):
+def new_generation(old_generation, data):
     survivors,parents = population_selection(old_generation)
     child = crossover(parents)
-    immigrants = init_pop(N_population - (len(survivors) + len(child)))
+    immigrants = init_pop(N_population - (len(survivors) + len(child)), data)
     new_population = np.vstack((np.vstack((survivors,child)),immigrants))
-    new_population = compute_properties(new_population)
+    new_population = compute_properties(new_population, data)
     return new_population
 
-def evolution(generation,N):
+def evolution(generation,N, data):
     for _ in range(N):
-        generation = new_generation(generation)
+        generation = new_generation(generation, data)
     return generation
 
-initial_pop = init_pop(N_population)
-compositions = evolution(initial_pop,N_generations)
+initial_pop = init_pop(N_population, data)
+compositions = evolution(initial_pop,N_generations, data)
 
 df = pd.DataFrame(compositions,columns=columns)
 
