@@ -68,11 +68,11 @@ other = [False, False, False, False, False, False, True, True]
 def crossover (mom, dad) :
     childs = np.zeros((N_childs, len(mom[0])))
     for i in range (N_childs) :
-        if mom[i][21] < dad[i][21] : #choix du meilleur E
+        if mom[i, 21] < dad[i, 21] : #choix du meilleur E
             bestE = dad[i]
         else :
             bestE = mom[i]
-        if mom[i][23] < dad[i][23] : #choix du meilleur Tm
+        if mom[i, 23] < dad[i, 23] : #choix du meilleur Tm
             bestTm = mom[i]
         else :
             bestTm = dad[i]
