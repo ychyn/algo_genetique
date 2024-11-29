@@ -10,9 +10,53 @@ from random import randint
 from glassdata import GlassData
 from network import NeuralNetwork
 
-# ---------------------------------------
-# Data-set on rho and ANN on molar volume
-# ---------------------------------------
+
+#Parametres fitness function
+
+weight=[0,0.3,0,0.7]
+minimize=[True,False,False,True]
+
+N_generations = 10
+N_population = 1000
+
+survivor_rate = 0.5
+parent_rate = 0.2
+child_rate = 0.4
+mutation_rate = 0
+immigration_rate = 1 - survivor_rate - child_rate
+
+def default_population_selection(generation):
+    survivors = generation[:int(N_population*survivor_rate)]
+    parents = generation[:N_parents]
+    #to_be_mutated = sorted_population[int(N_population*survivor_rate):int(N_population*survivor_rate)+int(N_population*mutation_rate)]
+    return survivors,parents
+
+def default_crossover (parents) :
+    #Dans parents chaque individu est représenté par 20 premiers floats et le dernier est la valeur de fitness
+    childs = np.array([[0.] * len(parents[0])] * N_childs)
+    for i in range (N_childs) :
+        i1 = randint(0, N_parents-1)
+        i2 = randint(0, N_parents-2)
+        if i2 == i1 : #problème si deux fois le même parent !!
+            i2 += 1
+        w1 = parents[i1, -1] / (parents[i1, -1] + parents[i2, -1]) #poids du parent 1
+        w2 = parents[i2, -1] / (parents[i1, -1] + parents[i2, -1]) #poids du parent 2
+        childs[i] = (w1 * parents[i1] + w2 * parents[i2]) #moyenne pondérée
+    return (childs)
+
+def default_mutation (mutants, xmin, xmax) :
+    #les mutants sont les meilleures compositions entre 40% et 50%
+    for j in range (N_mutants) :
+        iplus = randint(0, 19) #choix de l'oxyde qui gagne epsilon
+        imoins = randint(0, 19) #choix de l'oxyde qui perd epsilon
+        if imoins == iplus : #problème si deux fois le même oxyde !!
+            imoins = (1 + imoins)%19
+        mutantPlus = mutants[j, iplus]
+        mutantMoins = mutants[j, imoins]
+        if (mutantMoins > epsilon + xmin[j]) and (mutantPlus < xmax[j] - epsilon) :
+            mutants[j, iplus] = mutantPlus + epsilon
+            mutants[j, imoins] = mutantMoins - epsilon
+    return (mutants)
 
 class Data():
 
@@ -27,8 +71,20 @@ class Data():
         self.dbTliq = None
         self.nnTliq = None
         self.datadisso = None
+        self.generation = None
+        self.xmin = None
+        self.xmax = None
+
+        # Functions
+        self.crossover = None
+        self.mutation = None
+        self.population_selection = None
 
     def load(self):
+
+        # ---------------------------------------
+        # Data-set on rho and ANN on molar volume
+        # ---------------------------------------
         
         # Dataset of rho
         filedbrho='DataBase/rho20oxides.csv'
@@ -143,6 +199,76 @@ class Data():
         self.nnTliq.load(modelfile)
         self.nnTliq.info()
 
+        self.xmin = np.zeros(self.dbrho.noxide)
+        self.xmax = np.ones(self.dbrho.noxide)
+
+        # Function
+
+        self.population_selection = default_population_selection
+        self.crossover = default_crossover
+        self.mutation = default_mutation
+
+    def prop_calculation(self, composition):
+        rho=self.dbrho.GlassDensity(self.nnmolvol,self.dbrho.oxide,composition)
+        E=self.dbE.YoungModulus(self.nnmodelEsG,self.datadisso,self.dbE.oxide,composition)
+        Tg=self.dbTannealing.physicaly(self.nnTannealing.model.predict(composition).transpose()[0,:])
+        Tmelt=self.dbTmelt.physicaly(self.nnTmelt.model.predict(composition[:,:-1]).transpose()[0,:])
+        return np.vstack((rho,E,Tg,Tmelt)).transpose()
+
+    def normalize(self, prop):
+        return (prop - prop.min(axis=0))/(prop.max(axis=0)-prop.min(axis=0))
+
+    #prop est une array avec les proprietes du verre normalisées, weight est le poids qu'on accorde
+    #à chacune des proprietes, et minize est une liste de booléens selon qu'on veuille minimiser
+    #ou maximiser une certaine variable
+
+    def fitness_func(self, prop_normalized,weight,minimize):
+        rating = np.zeros(prop_normalized.shape[0])
+        for i in range(len(weight)):
+            if minimize[i]:
+                rating += (1-prop_normalized[:,i])*weight[i]
+            else:
+                rating += prop_normalized[:,i]*weight[i]
+        return rating
+
+    # Trie la population par F decroissant et renvoie cette population triée avec une nuovelle colonne qui represente 
+    # le fitness de chaque composition.
+
+    def stack_by_f(self, population,properties,F):
+        population_info = np.column_stack((population,properties,F))
+        sorted_arr = population_info[population_info[:, -1].argsort()][::-1]
+        return sorted_arr
+
+    def init_properties(self, population):
+        prop = self.prop_calculation(population)
+        normalized_prop = self.normalize(prop)
+        F = self.fitness_func(normalized_prop,weight,minimize)
+        sorted_arr = self.stack_by_f(population, prop, F)
+        return sorted_arr
+
+    def compute_properties(self, generation):
+        population_sorted = self.init_properties(generation[:, :20])
+        return population_sorted
+
+    def init_pop(self, N_population):
+        population,_=self.dbrho.better_random_composition(N_population,self.xmin,self.xmax)
+        population = self.init_properties(population)
+        self.generation = population
+        return population
+
+    def next_generation(self, old_generation):
+        survivors,parents = self.population_selection(old_generation)
+        child = self.crossover(parents)
+        immigrants = self.init_pop(N_population - (len(survivors) + len(child)))
+        new_population = np.vstack((np.vstack((survivors,child)),immigrants))
+        new_population = self.compute_properties(new_population)
+        return new_population
+
+    def evolution(self,N):
+        for _ in range(N):
+            self.generation = self.next_generation(self.generation)
+        return self.generation
+
 # ------------------------------------------
 # Determination of the bounds for each oxide
 # ------------------------------------------
@@ -172,19 +298,8 @@ xmin = np.zeros(data.dbrho.noxide)
 xmin[list(data.dbrho.oxide).index('SiO2')] = 0.35
 xmin[list(data.dbrho.oxide).index('Na2O')] = 0.1
 
-#Parametres fitness function
-
-weight=[0,0.3,0,0.7]
-minimize=[True,False,False,True]
-
-N_generations = 10
-N_population = 1000
-
-survivor_rate = 0.5
-parent_rate = 0.2
-child_rate = 0.4
-mutation_rate = 0
-immigration_rate = 1 - survivor_rate - child_rate
+data.xmin = xmin
+data.xmax = xmax
 
 #population = np.zeros((N_population,len(labels) + len(prop_label) + 1))
 
@@ -196,101 +311,8 @@ epsilon = 0.05
 
 # ## Creation de generations
 
-def prop_calculation(composition, data):
-    rho=data.dbrho.GlassDensity(data.nnmolvol,data.dbrho.oxide,composition)
-    E=data.dbE.YoungModulus(data.nnmodelEsG,data.datadisso,data.dbE.oxide,composition)
-    Tg=data.dbTannealing.physicaly(data.nnTannealing.model.predict(composition).transpose()[0,:])
-    Tmelt=data.dbTmelt.physicaly(data.nnTmelt.model.predict(composition[:,:-1]).transpose()[0,:])
-    return np.vstack((rho,E,Tg,Tmelt)).transpose()
-
-def normalize(prop):
-    return (prop - prop.min(axis=0))/(prop.max(axis=0)-prop.min(axis=0))
-
-#prop est une array avec les proprietes du verre normalisées, weight est le poids qu'on accorde
-#à chacune des proprietes, et minize est une liste de booléens selon qu'on veuille minimiser
-#ou maximiser une certaine variable
-
-def fitness_func(prop_normalized,weight,minimize):
-    rating = np.zeros(prop_normalized.shape[0])
-    for i in range(len(weight)):
-        if minimize[i]:
-            rating += (1-prop_normalized[:,i])*weight[i]
-        else:
-            rating += prop_normalized[:,i]*weight[i]
-    return rating
-
-# Trie la population par F decroissant et renvoie cette population triée avec une nuovelle colonne qui represente 
-# le fitness de chaque composition.
-
-def stack_by_f(population,properties,F):
-    population_info = np.column_stack((population,properties,F))
-    sorted_arr = population_info[population_info[:, -1].argsort()][::-1]
-    return sorted_arr
-
-def init_properties(population, data):
-    prop = prop_calculation(population, data)
-    normalized_prop = normalize(prop)
-    F = fitness_func(normalized_prop,weight,minimize)
-    sorted_arr = stack_by_f(population, prop, F)
-    return sorted_arr
-
-def compute_properties(generation, data):
-    population_sorted = init_properties(generation[:, :20], data)
-    return population_sorted
-
-def init_pop(N_population, data):
-    population,_=data.dbrho.better_random_composition(N_population,xmin,xmax)
-    population = init_properties(population, data)
-    return population
-
-def population_selection(generation):
-    survivors = generation[:int(N_population*survivor_rate)]
-    parents = generation[:N_parents]
-    #to_be_mutated = sorted_population[int(N_population*survivor_rate):int(N_population*survivor_rate)+int(N_population*mutation_rate)]
-    return survivors,parents
-
-def crossover (parents) :
-    #Dans parents chaque individu est représenté par 20 premiers floats et le dernier est la valeur de fitness
-    childs = np.array([[0.] * len(parents[0])] * N_childs)
-    for i in range (N_childs) :
-        i1 = randint(0, N_parents-1)
-        i2 = randint(0, N_parents-2)
-        if i2 == i1 : #problème si deux fois le même parent !!
-            i2 += 1
-        w1 = parents[i1, -1] / (parents[i1, -1] + parents[i2, -1]) #poids du parent 1
-        w2 = parents[i2, -1] / (parents[i1, -1] + parents[i2, -1]) #poids du parent 2
-        childs[i] = (w1 * parents[i1] + w2 * parents[i2]) #moyenne pondérée
-    return (childs)
-
-def mutation (mutants) :
-    #les mutants sont les meilleures compositions entre 40% et 50%
-    for j in range (N_mutants) :
-        iplus = randint(0, 19) #choix de l'oxyde qui gagne epsilon
-        imoins = randint(0, 19) #choix de l'oxyde qui perd epsilon
-        if imoins == iplus : #problème si deux fois le même oxyde !!
-            imoins = (1 + imoins)%19
-        mutantPlus = mutants[j, iplus]
-        mutantMoins = mutants[j, imoins]
-        if (mutantMoins > epsilon + xmin[j]) and (mutantPlus < xmax[j] - epsilon) :
-            mutants[j, iplus] = mutantPlus + epsilon
-            mutants[j, imoins] = mutantMoins - epsilon
-    return (mutants)
-
-def new_generation(old_generation, data):
-    survivors,parents = population_selection(old_generation)
-    child = crossover(parents)
-    immigrants = init_pop(N_population - (len(survivors) + len(child)), data)
-    new_population = np.vstack((np.vstack((survivors,child)),immigrants))
-    new_population = compute_properties(new_population, data)
-    return new_population
-
-def evolution(generation,N, data):
-    for _ in range(N):
-        generation = new_generation(generation, data)
-    return generation
-
-initial_pop = init_pop(N_population, data)
-compositions = evolution(initial_pop,N_generations, data)
+initial_pop = data.init_pop(N_population)
+compositions = data.evolution(N_generations)
 
 df = pd.DataFrame(compositions,columns=columns)
 
