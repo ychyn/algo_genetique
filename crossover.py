@@ -61,12 +61,12 @@ def mutation (mutants) :
 # formateurs = ['SiO2'] #essentiels
 # source : Franck
 
-fondants = [False, False, True, True, True, True, False, False] # diminuent Tm
-durability = [True, True, False, False, False, False, False, False] #augmentent E
-other = [False, False, False, False, False, False, True, True]
+fondants = [False, False, False, True, True, False, False, True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False] # diminuent Tm
+durability = [True, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False] #augmentent E
+other = [False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False]
 
 def crossover (mom, dad) :
-    childs = np.zeros((N_childs, len(mom[0])))
+    childs = np.zeros((len(mom), len(mom[0])))
     for i in range (N_childs) :
         if mom[i, 21] < dad[i, 21] : #choix du meilleur E
             bestE = dad[i]
