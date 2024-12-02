@@ -163,19 +163,5 @@ def check_convex(df):
     # Determination of the viscosity500
     Acompo,Bcompo,T0compo=VFTcoefficients(Tmeltcompo,Tsoftcompo,Tgcompo)
 
-    is_sorted = lambda a: np.all(a[:-1] <= a[1:])
-
-    NT=50
-    eta = np.zeros((Ncompo, NT))
-    T = np.zeros((Ncompo, NT))
-    slope = np.zeros((Ncompo, NT - 1))
-    checker = np.zeros(Ncompo, dtype=bool)
-    for i in range(Ncompo):
-        Tmin=1.1*Tgcompo[i]
-        Tmax=Tmeltcompo[i]
-        T[i]=np.linspace(Tmin,Tmax,NT)
-        eta[i]=10**(Acompo[i]+Bcompo[i]/(T[i]-T0compo[i]))
-        slope[i] = (np.log(eta[i, 1:]) - np.log(eta[i, :-1])) / (T[i, 1:] - T[i, :-1])
-        checker[i] = is_sorted(slope[i])
-    return checker
+    return (Bcompo > 0)
 
