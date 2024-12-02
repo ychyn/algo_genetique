@@ -44,6 +44,12 @@ def default_crossover (parents) :
         childs[i] = (w1 * parents[i1] + w2 * parents[i2]) #moyenne pondérée
     return (childs)
 
+N_parents = int(parent_rate * N_population)
+N_childs = int(child_rate * N_population)
+N_mutants = int(0.1 * N_population)
+
+epsilon = 0.05
+
 def default_mutation (mutants, xmin, xmax) :
     #les mutants sont les meilleures compositions entre 40% et 50%
     for j in range (N_mutants) :
@@ -221,9 +227,9 @@ class EvolutionModel():
     def normalize(self, prop):
         return (prop - prop.min(axis=0))/(prop.max(axis=0)-prop.min(axis=0))
 
-    #prop est une array avec les proprietes du verre normalisées, weight est le poids qu'on accorde
-    #à chacune des proprietes, et minize est une liste de booléens selon qu'on veuille minimiser
-    #ou maximiser une certaine variable
+    # prop est une array avec les proprietes du verre normalisées, weight est le poids qu'on accorde
+    # à chacune des proprietes, et minize est une liste de booléens selon qu'on veuille minimiser
+    # ou maximiser une certaine variable
 
     def fitness_func(self, prop_normalized,weight,minimize):
         rating = np.zeros(prop_normalized.shape[0])
@@ -272,30 +278,23 @@ class EvolutionModel():
             self.generation = self.next_generation(self.generation)
         return self.generation
 
-# ------------------------------------------
-# Determination of the bounds for each oxide
-# ------------------------------------------
-
-# # Algo genetique
-
-# ## Variables utiles
-
 data = EvolutionModel()
 data.load()
 
-labels = data.dbrho.oxide
-N_oxides = len(labels)
 available_mat = ['SiO2', 'Al2O3', 'MgO', 'CaO', 'Na2O', 'K2O','ZnO', 'TiO2']
-prop_label = ['rho','E','Tg','Tmelt']
-columns = list(labels)+prop_label+['F']
 
-#Contraintes
+def get_xmax(data, available_mat):
+    # Contraintes
 
-xmaxt=np.array([data.dbrho.xmax,data.dbE.xmax,data.dbTannealing.xmax,np.append(data.dbTmelt.xmax,1.),data.dbTliq.xmax])
-xmax=np.zeros(data.dbrho.noxide)
-for i in range(data.dbrho.noxide):
-    if data.dbrho.oxide[i] in available_mat:
-        xmax[i]=np.min(xmaxt[:,i])
+    xmaxt=np.array([data.dbrho.xmax,data.dbE.xmax,data.dbTannealing.xmax,np.append(data.dbTmelt.xmax,1.),data.dbTliq.xmax])
+    xmax=np.zeros(data.dbrho.noxide)
+    for i in range(data.dbrho.noxide):
+        if data.dbrho.oxide[i] in available_mat:
+            xmax[i]=np.min(xmaxt[:,i])
+    
+    return xmax
+
+xmax = get_xmax(data, available_mat)
 
 xmin = np.zeros(data.dbrho.noxide)
 xmin[list(data.dbrho.oxide).index('SiO2')] = 0.35
@@ -304,20 +303,16 @@ xmin[list(data.dbrho.oxide).index('Na2O')] = 0.1
 data.xmin = xmin
 data.xmax = xmax
 
-#population = np.zeros((N_population,len(labels) + len(prop_label) + 1))
-
-N_parents = int(parent_rate * N_population)
-N_childs = int(child_rate * N_population)
-N_mutants = int(0.1 * N_population)
-
-epsilon = 0.05
-
-# ## Creation de generations
+# Creation de generations
 
 initial_pop = data.init_pop(N_population)
 final_pop = data.evolution(N_generations)
 
-df = pd.DataFrame(final_pop,columns=columns)
+labels = data.dbrho.oxide
+prop_label = ['rho','E','Tg','Tmelt']
+columns = list(labels)+prop_label+['F']
+
+df = pd.DataFrame(final_pop, columns = columns)
 
 df.to_csv('generation_final.csv')
 
