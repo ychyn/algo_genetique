@@ -252,7 +252,7 @@ Acompo,Bcompo,T0compo=VFTcoefficients(Tmeltcompo,Tsoftcompo,Tgcompo)
 
 NT=50
 plt.figure()
-for i in range(Ncompo-1):
+for i in range(Ncompo):
     Tmin=1.1*Tgcompo[i]
     Tmax=Tmeltcompo[i]
     T=np.linspace(Tmin,Tmax,NT)
@@ -260,11 +260,11 @@ for i in range(Ncompo-1):
     plt.semilogy(T-273.15,eta)
     plt.annotate('Glass'+str(i),(T[0]-273.15,eta[0]))
 #end for
-Tmin=1.1*Tgcompo[-1]
-Tmax=Tmeltcompo[-1]
-T=np.linspace(Tmin,Tmax,NT)
-eta=10**(Acompo[-1]+Bcompo[-1]/(T-T0compo[-1]))
-plt.semilogy(T-273.15,eta,'k--')
+# Tmin=1.1*Tgcompo[-1]
+# Tmax=Tmeltcompo[-1]
+# T=np.linspace(Tmin,Tmax,NT)
+# eta=10**(Acompo[-1]+Bcompo[-1]/(T-T0compo[-1]))
+# plt.semilogy(T-273.15,eta,'k--')
 #plt.annotate('Lion Glass',(T[0]-273.15,eta[0]))
 plt.xlabel(r'$T$ (°C)')
 plt.ylabel(r'$\eta$ (Pa.s)')
