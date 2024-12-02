@@ -62,18 +62,21 @@ class EvolutionModel():
 
     def __init__(self):
         self.dbrho = None
-        self.nnmolvol = None
         self.dbE = None
         self.dbTannealing = None
-        self.nnmodelEsG = None
         self.dbTmelt = None
-        self.nnTmelt = None
         self.dbTliq = None
-        self.nnTliq = None
         self.datadisso = None
-        self.generation = None
+
+        self.nnmolvol = None
+        self.nnmodelEsG = None
+        self.nnTmelt = None
+        self.nnTliq = None
+
         self.xmin = None
         self.xmax = None
+        
+        self.generation = None
 
         # Functions
         self.crossover = None
