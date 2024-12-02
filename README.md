@@ -71,6 +71,8 @@ Les fonctions utilisées lors de passage d'une génération à l'autre :
 
 Elle possède les méthodes suivantes :
 
+<!-- TO DO -->
+
 - `load(self)`  
 Charge les bases de données et les modèles ainsi que les fonction de passage de base
 - `prop_calculation(self, composition)`  
