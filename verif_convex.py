@@ -24,144 +24,83 @@ from glassproperties import VFTcoefficients
 # ---------------------------------------
 
 
-def check_convex(df):
-    # -------------------------
-    # Data-set of glass density
-    # -------------------------
+class ConvexModel():
 
-    filedbrho='DataBase/rho20oxides.csv'
-    dbrho=GlassData(filedbrho)
-    dbrho.info()
-    dbrho.bounds()
+    def __init__(self):
+        # ---------------------------------------
+        # Data-set on Tannealing=Tg and ANN model
+        # ---------------------------------------
 
-    # Determination of the molar volume
-    dbrho.oxidemolarmass()
-    dbrho.molarmass()
-    dbrho.y=dbrho.MolarM/dbrho.y
-    dbrho.normalize_y()
+        filedbTannealing='DataBase/Tannealing20oxides.csv'
+        self.dbTannealing=GlassData(filedbTannealing)
+        self.dbTannealing.info()
+        self.dbTannealing.bounds()
+        self.dbTannealing.normalize_y()
 
-    # Loading of the ANN model
-    arch=[20,20,20]
-    nnmolvol=NeuralNetwork(dbrho.noxide,arch,'gelu','linear')
-    nnmolvol.compile(3.e-4)
-    nnmolvol.ArchName(arch)
-    nnmolvol.load('Models/nnmolarvol'+nnmolvol.namearch+'.h5')
-    nnmolvol.info()
+        # ANN model on Tannealing
+        # -----------------------
 
-    # ------------------------------------------------
-    # Data-set on Young's modulus and ANN on Vt=E/(2G)
-    # ------------------------------------------------
+        arch=[20,20,20]
+        self.nnTannealing=NeuralNetwork(self.dbTannealing.noxide,arch,'gelu','linear')
+        self.nnTannealing.compile(3.e-4)
+        self.nnTannealing.ArchName(arch)
+        self.nnTannealing.load('Models/nn'+self.dbTannealing.nameproperty+self.nnTannealing.namearch+'.h5')
+        # nnTannealing.info()
 
-    filedbE='DataBase/E20oxides.csv'
-    dbE=GlassData(filedbE)
-    dbE.info()
-    dbE.bounds()
+        # -------------------------------
+        # Data-set on Tmelt and ANN Model
+        # -------------------------------
+        # ! This data-set does not include V2O5. Only 19 oxides are involved.
 
-    # ------------------------------
-    # Loading of dissociation energy
-    # ------------------------------
+        filedbTmelt='DataBase/Tmelt19oxides.csv'
+        self.dbTmelt=GlassData(filedbTmelt)
+        self.dbTmelt.info()
+        self.dbTmelt.bounds()
+        self.dbTmelt.normalize_y()
 
-    datadisso=pd.read_csv('dissociationenergy.csv')
-    G=np.zeros(dbE.nsample)
-    for i in range(dbE.nsample):
-        G[i]=np.sum(datadisso['G'].values*dbE.x[i,:])
-    #end for
+        # ANN model on Tmelt
+        # ------------------
 
-    # Determination of E/G and normalization
-    dbE.y=dbE.y/(2.*G)
-    dbE.normalize_y()
+        arch=[20,20,20]
+        self.nnTmelt=NeuralNetwork(self.dbTmelt.noxide,arch,'gelu','linear')
+        self.nnTmelt.compile(3.e-4)
+        self.nnTmelt.ArchName(arch)
+        self.nnTmelt.load('Models/nn'+ self.dbTmelt.nameproperty + self.nnTmelt.namearch+'.h5')
+        # nnTmelt.info()
 
-    # ------------------------------
-    # Loading of the ANN model on Vt
-    # ------------------------------
+        # -------------------------------
+        # Data-set on Tsoft and ANN model
+        # -------------------------------
 
-    arch=[20,20,20]
-    nnmodelEsG=NeuralNetwork(dbE.noxide,arch,'gelu','linear')
-    nnmodelEsG.compile(1.e-4)
-    nnmodelEsG.ArchName(arch)
-    nnmodelEsG.load('Models/nnEsG'+nnmodelEsG.namearch+'.h5')
-    nnmodelEsG.info()
+        # Data-set on Tsoft
+        # -----------------
 
-    # ---------------------------------------
-    # Data-set on Tannealing=Tg and ANN model
-    # ---------------------------------------
+        filedbTsoft='DataBase/Tsoft20oxides.csv'
+        self.dbTsoft=GlassData(filedbTsoft)
+        self.dbTsoft.info()
+        self.dbTsoft.bounds()
+        self.dbTsoft.normalize_y()
 
-    filedbTannealing='DataBase/Tannealing20oxides.csv'
-    dbTannealing=GlassData(filedbTannealing)
-    dbTannealing.info()
-    dbTannealing.bounds()
-    dbTannealing.normalize_y()
+        # ANN model on Tsoft
+        # ------------------
 
-    # ANN model on Tannealing
-    # -----------------------
+        arch=[20,20,20]
+        self.nnTsoft=NeuralNetwork(self.dbTsoft.noxide,arch,'gelu','linear')
+        self.nnTsoft.compile(3.e-4)
+        self.nnTsoft.ArchName(arch)
+        modelfile='Models/nn'+ self.dbTsoft.nameproperty + self.nnTsoft.namearch+'.h5'
+        self.nnTsoft.load(modelfile)
+        self.nnTsoft.info()
 
-    arch=[20,20,20]
-    nnTannealing=NeuralNetwork(dbTannealing.noxide,arch,'gelu','linear')
-    nnTannealing.compile(3.e-4)
-    nnTannealing.ArchName(arch)
-    nnTannealing.load('Models/nn'+dbTannealing.nameproperty+nnTannealing.namearch+'.h5')
-    # nnTannealing.info()
+    def convex_coefficient(self, generation):
+        # # Loading of compositions
+        xcompo=generation[:, :20]
+        Tgcompo=self.dbTannealing.physicaly(self.nnTannealing.model.predict(xcompo).transpose()[0,:])
+        Tmeltcompo=self.dbTmelt.physicaly(self.nnTmelt.model.predict(xcompo[:,:-1]).transpose()[0,:])
+        Tsoftcompo=self.dbTsoft.physicaly(self.nnTsoft.model.predict(xcompo).transpose()[0,:])
 
-    # -------------------------------
-    # Data-set on Tmelt and ANN Model
-    # -------------------------------
-    # ! This data-set does not include V2O5. Only 19 oxides are involved.
+        # Determination of the viscosity500
+        Acompo,Bcompo,T0compo=VFTcoefficients(Tmeltcompo,Tsoftcompo,Tgcompo)
 
-    filedbTmelt='DataBase/Tmelt19oxides.csv'
-    dbTmelt=GlassData(filedbTmelt)
-    # dbTmelt.info()
-    dbTmelt.bounds()
-    dbTmelt.normalize_y()
-
-    # ANN model on Tmelt
-    # ------------------
-
-    arch=[20,20,20]
-    nnTmelt=NeuralNetwork(dbTmelt.noxide,arch,'gelu','linear')
-    nnTmelt.compile(3.e-4)
-    nnTmelt.ArchName(arch)
-    nnTmelt.load('Models/nn'+dbTmelt.nameproperty+nnTmelt.namearch+'.h5')
-    # nnTmelt.info()
-
-    # -------------------------------
-    # Data-set on Tsoft and ANN model
-    # -------------------------------
-
-    # Data-set on Tsoft
-    # -----------------
-
-    filedbTsoft='DataBase/Tsoft20oxides.csv'
-    dbTsoft=GlassData(filedbTsoft)
-    dbTsoft.info()
-    dbTsoft.bounds()
-    dbTsoft.normalize_y()
-
-    # ANN model on Tsoft
-    # ------------------
-
-    arch=[20,20,20]
-    nnTsoft=NeuralNetwork(dbTsoft.noxide,arch,'gelu','linear')
-    nnTsoft.compile(3.e-4)
-    nnTsoft.ArchName(arch)
-    modelfile='Models/nn'+dbTsoft.nameproperty+nnTsoft.namearch+'.h5'
-    nnTsoft.load(modelfile)
-    nnTsoft.info()
-
-    # Graphical representation
-    # ------------------------
-
-    # # Loading of compositions
-    dcompo=df.iloc[:, :20]
-    xcompo=dcompo.values[:,:]
-    Ncompo=np.size(xcompo,0)
-    rhocompo=dbrho.GlassDensity(nnmolvol,dbrho.oxide,xcompo)
-    Ecompo=dbE.YoungModulus(nnmodelEsG,datadisso,dbE.oxide,xcompo)
-    Tgcompo=dbTannealing.physicaly(nnTannealing.model.predict(xcompo).transpose()[0,:])
-    Tmeltcompo=dbTmelt.physicaly(nnTmelt.model.predict(xcompo[:,:-1]).transpose()[0,:])
-    Tsoftcompo=dbTsoft.physicaly(nnTsoft.model.predict(xcompo).transpose()[0,:])
-
-    # Determination of the viscosity500
-    Acompo,Bcompo,T0compo=VFTcoefficients(Tmeltcompo,Tsoftcompo,Tgcompo)
-
-    return (Bcompo >= 0)
+        return Bcompo
 
