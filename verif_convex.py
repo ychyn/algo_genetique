@@ -102,5 +102,5 @@ class ConvexModel():
         # Determination of the viscosity500
         Acompo,Bcompo,T0compo=VFTcoefficients(Tmeltcompo,Tsoftcompo,Tgcompo)
 
-        return Bcompo
+        return Bcompo * np.sign((Tgcompo * 1.1 - T0compo))
 
