@@ -163,5 +163,5 @@ def check_convex(df):
     # Determination of the viscosity500
     Acompo,Bcompo,T0compo=VFTcoefficients(Tmeltcompo,Tsoftcompo,Tgcompo)
 
-    return (Bcompo > 0)
+    return (Bcompo >= 0)
 
