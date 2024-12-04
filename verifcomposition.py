@@ -237,10 +237,12 @@ print('Tmeltcompo=',Tmeltcompo)
 print('Tsoftcompo=',Tsoftcompo)
 
 if (Plot):
-    ax1.plot(rhocompo[:-1],Ecompo[:-1],'ko')
-    ax1.plot(rhocompo[-1],Ecompo[-1],'bo')
-    ax2.plot(Tmeltcompo[:-1]-273.15,Tgcompo[:-1]-273.15,'ko')
-    ax2.plot(Tmeltcompo[-1]-273.15,Tgcompo[-1]-273.15,'bo')
+    ax1.plot(rhocompo[0],Ecompo[0],'bo')
+    ax1.plot(rhocompo[1],Ecompo[1], color = '#FF7F0E', marker = 'o')
+    ax1.plot(rhocompo[2],Ecompo[2],'go')
+    ax2.plot(Tmeltcompo[0]-273.15,Tgcompo[0]-273.15,'bo')
+    ax2.plot(Tmeltcompo[1]-273.15,Tgcompo[1]-273.15, color = '#FF7F0E', marker = 'o')
+    ax2.plot(Tmeltcompo[2]-273.15,Tgcompo[2]-273.15,'go')
     ax1.set_xlabel(r'$\rho$ (kg/m$^3$)')
     ax1.set_ylabel(r'$E$ (GPa)')
     ax2.set_xlabel(r'$T_m$ (°C)')
@@ -258,7 +260,7 @@ for i in range(Ncompo):
     T=np.linspace(Tmin,Tmax,NT)
     eta=10**(Acompo[i]+Bcompo[i]/(T-T0compo[i]))
     plt.semilogy(T-273.15,eta)
-    plt.annotate('Glass'+str(i),(T[0]-273.15,eta[0]))
+    plt.annotate('Verre'+str(i+1),(T[0]-273.15,eta[0]))
 #end for
 # Tmin=1.1*Tgcompo[-1]
 # Tmax=Tmeltcompo[-1]

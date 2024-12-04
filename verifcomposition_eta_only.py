@@ -47,58 +47,58 @@ SAVEFIG=True
 # Data-set of glass density
 # -------------------------
 
-filedbrho='DataBase/rho20oxides.csv'
-dbrho=GlassData(filedbrho)
-dbrho.info()
-dbrho.bounds()
+# filedbrho='DataBase/rho20oxides.csv'
+# dbrho=GlassData(filedbrho)
+# dbrho.info()
+# dbrho.bounds()
 
 # Determination of the molar volume
-dbrho.oxidemolarmass()
-dbrho.molarmass()
-dbrho.y=dbrho.MolarM/dbrho.y
-dbrho.normalize_y()
+# dbrho.oxidemolarmass()
+# dbrho.molarmass()
+# dbrho.y=dbrho.MolarM/dbrho.y
+# dbrho.normalize_y()
 
 # Loading of the ANN model
-arch=[20,20,20]
-nnmolvol=NeuralNetwork(dbrho.noxide,arch,'gelu','linear')
-nnmolvol.compile(3.e-4)
-nnmolvol.ArchName(arch)
-nnmolvol.load('Models/nnmolarvol'+nnmolvol.namearch+'.h5')
-nnmolvol.info()
+# arch=[20,20,20]
+# nnmolvol=NeuralNetwork(dbrho.noxide,arch,'gelu','linear')
+# nnmolvol.compile(3.e-4)
+# nnmolvol.ArchName(arch)
+# nnmolvol.load('Models/nnmolarvol'+nnmolvol.namearch+'.h5')
+# nnmolvol.info()
 
 # ------------------------------------------------
 # Data-set on Young's modulus and ANN on Vt=E/(2G)
 # ------------------------------------------------
 
-filedbE='DataBase/E20oxides.csv'
-dbE=GlassData(filedbE)
-dbE.info()
-dbE.bounds()
+# filedbE='DataBase/E20oxides.csv'
+# dbE=GlassData(filedbE)
+# dbE.info()
+# dbE.bounds()
 
 # ------------------------------
 # Loading of dissociation energy
 # ------------------------------
 
-datadisso=pd.read_csv('dissociationenergy.csv')
-G=np.zeros(dbE.nsample)
-for i in range(dbE.nsample):
-    G[i]=np.sum(datadisso['G'].values*dbE.x[i,:])
-#end for
+# datadisso=pd.read_csv('dissociationenergy.csv')
+# G=np.zeros(dbE.nsample)
+# for i in range(dbE.nsample):
+#     G[i]=np.sum(datadisso['G'].values*dbE.x[i,:])
+# #end for
 
 # Determination of E/G and normalization
-dbE.y=dbE.y/(2.*G)
-dbE.normalize_y()
+# dbE.y=dbE.y/(2.*G)
+# dbE.normalize_y()
 
 # ------------------------------
 # Loading of the ANN model on Vt
 # ------------------------------
 
-arch=[20,20,20]
-nnmodelEsG=NeuralNetwork(dbE.noxide,arch,'gelu','linear')
-nnmodelEsG.compile(1.e-4)
-nnmodelEsG.ArchName(arch)
-nnmodelEsG.load('Models/nnEsG'+nnmodelEsG.namearch+'.h5')
-nnmodelEsG.info()
+# arch=[20,20,20]
+# nnmodelEsG=NeuralNetwork(dbE.noxide,arch,'gelu','linear')
+# nnmodelEsG.compile(1.e-4)
+# nnmodelEsG.ArchName(arch)
+# nnmodelEsG.load('Models/nnEsG'+nnmodelEsG.namearch+'.h5')
+# nnmodelEsG.info()
 
 # ---------------------------------------
 # Data-set on Tannealing=Tg and ANN model
@@ -169,18 +169,18 @@ nnTsoft.info()
 # Determination of the bounds for each oxide
 # ------------------------------------------
 
-xmaxt=np.array([dbrho.xmax,dbE.xmax,dbTannealing.xmax,np.append(dbTmelt.xmax,1.)])
-xmax=np.zeros(dbrho.noxide)
-for i in range(dbrho.noxide):
-    xmax[i]=np.min(xmaxt[:,i])
-#endif
+# xmaxt=np.array([dbrho.xmax,dbE.xmax,dbTannealing.xmax,np.append(dbTmelt.xmax,1.)])
+# xmax=np.zeros(dbrho.noxide)
+# for i in range(dbrho.noxide):
+#     xmax[i]=np.min(xmaxt[:,i])
+# #endif
 
 # -----------------------------------------------------
 # Generation of random Nglass compositions without V2O3
 # -----------------------------------------------------
 
-Nglass=1
-xglass,Mmolar=dbrho.randomcomposition(Nglass,xmax)
+# Nglass=1
+# xglass,Mmolar=dbrho.randomcomposition(Nglass,xmax)
 
 # ---------------------------------
 # Computation of various properties
@@ -189,22 +189,22 @@ xglass,Mmolar=dbrho.randomcomposition(Nglass,xmax)
 # Computation of rho from the ANN model on molar volume
 # -----------------------------------------------------
 
-rho=dbrho.GlassDensity(nnmolvol,dbrho.oxide,xglass)
+# rho=dbrho.GlassDensity(nnmolvol,dbrho.oxide,xglass)
 
-# Computation of E from the ANN model on Vt
-# -----------------------------------------
+# # Computation of E from the ANN model on Vt
+# # -----------------------------------------
 
-E=dbE.YoungModulus(nnmodelEsG,datadisso,dbE.oxide,xglass)
+# E=dbE.YoungModulus(nnmodelEsG,datadisso,dbE.oxide,xglass)
 
-# Computation of Tg from the ANN model on Tannealing
-# --------------------------------------------------
+# # Computation of Tg from the ANN model on Tannealing
+# # --------------------------------------------------
 
-Tg=dbTannealing.physicaly(nnTannealing.model.predict(xglass).transpose()[0,:])
+# Tg=dbTannealing.physicaly(nnTannealing.model.predict(xglass).transpose()[0,:])
 
-# Computation of Tmelt from the ANN model on Tmelt
-# ------------------------------------------------
-# ! The last molar fraction is removed since V2O3 is not involved.
-Tmelt=dbTmelt.physicaly(nnTmelt.model.predict(xglass[:,:-1]).transpose()[0,:])
+# # Computation of Tmelt from the ANN model on Tmelt
+# # ------------------------------------------------
+# # ! The last molar fraction is removed since V2O3 is not involved.
+# Tmelt=dbTmelt.physicaly(nnTmelt.model.predict(xglass[:,:-1]).transpose()[0,:])
 
 # Graphical representation
 # ------------------------
@@ -225,16 +225,16 @@ file='newglasscompo.csv'
 dcompo=pd.read_csv(file,index_col=0)
 xcompo=dcompo.values[:,:]
 Ncompo=np.size(xcompo,0)
-rhocompo=dbrho.GlassDensity(nnmolvol,dbrho.oxide,xcompo)
-Ecompo=dbE.YoungModulus(nnmodelEsG,datadisso,dbE.oxide,xcompo)
+# rhocompo=dbrho.GlassDensity(nnmolvol,dbrho.oxide,xcompo)
+# Ecompo=dbE.YoungModulus(nnmodelEsG,datadisso,dbE.oxide,xcompo)
 Tgcompo=dbTannealing.physicaly(nnTannealing.model.predict(xcompo).transpose()[0,:])
 Tmeltcompo=dbTmelt.physicaly(nnTmelt.model.predict(xcompo[:,:-1]).transpose()[0,:])
 Tsoftcompo=dbTsoft.physicaly(nnTsoft.model.predict(xcompo).transpose()[0,:])
-print('rhocompo=',rhocompo)
-print('Ecompo=',Ecompo)
-print('Tgcompo=',Tgcompo)
-print('Tmeltcompo=',Tmeltcompo)
-print('Tsoftcompo=',Tsoftcompo)
+# print('rhocompo=',rhocompo)
+# print('Ecompo=',Ecompo)
+# print('Tgcompo=',Tgcompo)
+# print('Tmeltcompo=',Tmeltcompo)
+# print('Tsoftcompo=',Tsoftcompo)
 
 # if (Plot):
 #     ax1.plot(rhocompo[:-1],Ecompo[:-1],'ko')
@@ -259,7 +259,7 @@ for i in range(Ncompo):
     eta=10**(Acompo[i]+Bcompo[i]/(T-T0compo[i]))
     print(T, T0compo)
     plt.semilogy(T-273.15,eta)
-    plt.annotate('Glass'+str(i),(T[0]-273.15,eta[0]))
+    plt.annotate('Verre '+str(i + 1),(T[0]-273.15,eta[0]))
 #end for
 # Tmin=1.1*Tgcompo[-1]
 # Tmax=Tmeltcompo[-1]
