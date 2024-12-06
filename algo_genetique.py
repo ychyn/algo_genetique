@@ -13,35 +13,69 @@ from network import NeuralNetwork
 
 #Parametres fitness function
 
-weight=[0,0.3,0,0.7]
+weight=[0,0.35,0,0.65]
 minimize=[True,False,False,True]
+penalties_onMin = [-np.inf, -np.inf, -np.inf, -np.inf]
+penalties_onMax = [np.inf, np.inf, np.inf, np.inf]
 
 N_generations = 10
 N_population = 1000
 
-survivor_rate = 0.5
-parent_rate = 0.2
-child_rate = 0.4
+survivor_rate = 0.1
+parent_rate = 0.5
+child_rate = 0.7
 mutation_rate = 0
 immigration_rate = 1 - survivor_rate - child_rate
 
+strategies = ['2by2','tournament']
+N_tournament = 5
+child_strategy = strategies[1]
+
+def parent_choice (parents,strategie) :
+    if strategie =='2by2' and N_parents>= 2*N_childs:
+        dads = parents[::2]
+        moms = parents[1::2]
+        return (np.array(moms[:N_childs]),np.array(dads[:N_childs]))    
+    if strategie =='tournament':
+        dads =[]
+        moms =[]
+        for i in range(N_childs):
+            t = np.array([parents[i,:] for i in np.random.choice(N_parents,N_childs)])
+            dad = t[np.argmax(t[:N_tournament,-1])]
+            mom = t[np.argmax(t[N_tournament:,-1])]
+            dads.append(dad)
+            moms.append(mom)
+        return (np.array(moms),np.array(dads))
+    #Fallback
+    t = np.array([parents[i] for i in np.random.choice(N_parents,N_childs*2)])
+    return (np.array(t[N_childs:]),np.array(t[:N_childs]))
+
 def default_population_selection(generation):
     survivors = generation[:int(N_population*survivor_rate)]
-    parents = generation[:N_parents]
+    dads,moms = parent_choice(generation[:N_parents],child_strategy)
     #to_be_mutated = sorted_population[int(N_population*survivor_rate):int(N_population*survivor_rate)+int(N_population*mutation_rate)]
-    return survivors,parents
+    return survivors,dads,moms 
 
-def default_crossover (parents) :
-    #Dans parents chaque individu est représenté par 20 premiers floats et le dernier est la valeur de fitness
-    childs = np.array([[0.] * len(parents[0])] * N_childs)
+fondants = [False, False, False, True, True, False, False, True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False] # diminuent Tm
+durability = [True, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False] #augmentent E
+other = [False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False]
+
+def default_crossover (mom, dad) :
+    childs = np.zeros((len(mom), len(mom[0])))
     for i in range (N_childs) :
-        i1 = randint(0, N_parents-1)
-        i2 = randint(0, N_parents-2)
-        if i2 == i1 : #problème si deux fois le même parent !!
-            i2 += 1
-        w1 = parents[i1, -1] / (parents[i1, -1] + parents[i2, -1]) #poids du parent 1
-        w2 = parents[i2, -1] / (parents[i1, -1] + parents[i2, -1]) #poids du parent 2
-        childs[i] = (w1 * parents[i1] + w2 * parents[i2]) #moyenne pondérée
+        if mom[i, 21] < dad[i, 21] : #choix du meilleur E
+            bestE = dad[i]
+        else :
+            bestE = mom[i]
+        if mom[i, 23] < dad[i, 23] : #choix du meilleur Tm
+            bestTm = mom[i]
+        else :
+            bestTm = dad[i]
+        childs[i][fondants] = bestTm[fondants]
+        childs[i][durability] = bestE[durability]
+        childs[i][other] = (mom[i][other] + dad[i][other])/2
+        sum = np.sum(childs[i,1:])
+        childs[i,1:] = (1-childs[i,0]) * childs[i,1:] / sum
     return (childs)
 
 N_parents = int(parent_rate * N_population)
@@ -64,6 +98,16 @@ def default_mutation (mutants, xmin, xmax) :
             mutants[j, imoins] = mutantMoins - epsilon
     return (mutants)
 
+def bettermutation (mutants, xmin, xmax) :
+    for j in range (N_mutants) :
+        travel = np.random.rand(20) - 0.5
+        travel =travel/np.linalg.norm(travel)*epsilon
+        mutants[j,:20] += travel
+        for _ in range(5):
+            mutants[j,:20] = np.clip(mutants[j,:20],xmin*np.sum(mutants[j,:20]),xmax*np.sum(mutants[j,:20]))
+            mutants[j,:20] = mutants[j,:20]/np.sum(mutants[j,:20])
+    return (mutants)
+
 class EvolutionModel():
 
     def __init__(self):
@@ -81,6 +125,10 @@ class EvolutionModel():
 
         self.xmin = None
         self.xmax = None
+        self.prop_min = None
+        self.prop_max = None
+        self.penalties_onMin_normalized = None
+        self.penalties_onMax_normalized = None
         
         self.generation = None
 
@@ -217,6 +265,12 @@ class EvolutionModel():
         self.crossover = default_crossover
         self.mutation = default_mutation
 
+        self.prop_min = np.array([min(self.dbrho.y),min(self.dbE.y),min(self.dbTannealing.y),min(self.dbTmelt.y)])
+        self.prop_max = np.array([max(self.dbrho.y),max(self.dbE.y),max(self.dbTannealing.y),max(self.dbTmelt.y)])
+
+        self.penalties_onMin_normalized = self.normalize(penalties_onMin)
+        self.penalties_onMax_normalized = self.normalize(penalties_onMax)
+
     def prop_calculation(self, composition):
         rho=self.dbrho.GlassDensity(self.nnmolvol,self.dbrho.oxide,composition)
         E=self.dbE.YoungModulus(self.nnmodelEsG,self.datadisso,self.dbE.oxide,composition)
@@ -225,20 +279,26 @@ class EvolutionModel():
         return np.vstack((rho,E,Tg,Tmelt)).transpose()
 
     def normalize(self, prop):
-        return (prop - prop.min(axis=0))/(prop.max(axis=0)-prop.min(axis=0))
+        return (prop - self.prop_min)/(self.prop_max - self.prop_min)
 
     # prop est une array avec les proprietes du verre normalisées, weight est le poids qu'on accorde
     # à chacune des proprietes, et minize est une liste de booléens selon qu'on veuille minimiser
     # ou maximiser une certaine variable
 
-    def fitness_func(self, prop_normalized,weight,minimize):
-        rating = np.zeros(prop_normalized.shape[0])
-        for i in range(len(weight)):
-            if minimize[i]:
-                rating += (1-prop_normalized[:,i])*weight[i]
-            else:
-                rating += prop_normalized[:,i]*weight[i]
+    def fitness(self, property_normalized):
+        rating = 0
+        #print(penalties_onMin_normalized, property_normalized, penalties_onMax_normalized)
+        #print(np.all(penalties_onMin_normalized <= property_normalized) and np.all(penalties_onMax_normalized >= property_normalized))
+        if np.all(self.penalties_onMin_normalized <= property_normalized) and np.all(self.penalties_onMax_normalized >= property_normalized):
+            for i in range(len(weight)):
+                if minimize[i]:
+                    rating += (1-property_normalized[i])*weight[i]
+                else:
+                    rating += property_normalized[i]*weight[i]
         return rating
+
+    def fitness_func(self, prop_normalized):
+        return np.apply_along_axis(self.fitness, 1, prop_normalized)
 
     # Trie la population par F decroissant et renvoie cette population triée avec une nuovelle colonne qui represente 
     # le fitness de chaque composition.
@@ -251,7 +311,7 @@ class EvolutionModel():
     def init_properties(self, population):
         prop = self.prop_calculation(population)
         normalized_prop = self.normalize(prop)
-        F = self.fitness_func(normalized_prop,weight,minimize)
+        F = self.fitness_func(normalized_prop)
         sorted_arr = self.stack_by_f(population, prop, F)
         return sorted_arr
 
@@ -265,9 +325,9 @@ class EvolutionModel():
         self.generation = population
         return population
 
-    def next_generation(self, old_generation):
-        survivors,parents = self.population_selection(old_generation)
-        child = self.crossover(parents)
+    def new_generation(self, old_generation):
+        survivors,dads,moms = self.population_selection(old_generation)
+        child = bettermutation(self.crossover( dads, moms) , self.xmin, self.xmax)
         immigrants = self.init_pop(N_population - (len(survivors) + len(child)))
         new_population = np.vstack((np.vstack((survivors,child)),immigrants))
         new_population = self.compute_properties(new_population)
@@ -275,7 +335,7 @@ class EvolutionModel():
 
     def evolution(self,N):
         for _ in range(N):
-            self.generation = self.next_generation(self.generation)
+            self.generation = self.new_generation(self.generation)
         return self.generation
 
 data = EvolutionModel()
@@ -297,7 +357,7 @@ def get_xmax(data, available_mat):
 xmax = get_xmax(data, available_mat)
 
 xmin = np.zeros(data.dbrho.noxide)
-xmin[list(data.dbrho.oxide).index('SiO2')] = 0.35
+xmin[list(data.dbrho.oxide).index('SiO2')] = 0.5
 xmin[list(data.dbrho.oxide).index('Na2O')] = 0.1
 
 data.xmin = xmin
