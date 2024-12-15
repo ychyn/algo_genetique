@@ -125,8 +125,6 @@ class EvolutionModel():
 
         self.xmin = None
         self.xmax = None
-        self.prop_min = None
-        self.prop_max = None
         self.penalties_onMin_normalized = None
         self.penalties_onMax_normalized = None
         
@@ -259,14 +257,11 @@ class EvolutionModel():
         self.xmin = np.zeros(self.dbrho.noxide)
         self.xmax = np.ones(self.dbrho.noxide)
 
-        # Function
+        # Functions
 
         self.population_selection = default_population_selection
         self.crossover = default_crossover
         self.mutation = default_mutation
-
-        self.prop_min = np.array([min(self.dbrho.y),min(self.dbE.y),min(self.dbTannealing.y),min(self.dbTmelt.y)])
-        self.prop_max = np.array([max(self.dbrho.y),max(self.dbE.y),max(self.dbTannealing.y),max(self.dbTmelt.y)])
 
         self.penalties_onMin_normalized = self.normalize(penalties_onMin)
         self.penalties_onMax_normalized = self.normalize(penalties_onMax)
@@ -279,7 +274,9 @@ class EvolutionModel():
         return np.vstack((rho,E,Tg,Tmelt)).transpose()
 
     def normalize(self, prop):
-        return (prop - self.prop_min)/(self.prop_max - self.prop_min)
+        prop_min = np.array([min(self.dbrho.y),min(self.dbE.y),min(self.dbTannealing.y),min(self.dbTmelt.y)])
+        prop_max = np.array([max(self.dbrho.y),max(self.dbE.y),max(self.dbTannealing.y),max(self.dbTmelt.y)])
+        return (prop - prop_min)/(prop_max - prop_min)
 
     # prop est une array avec les proprietes du verre normalisées, weight est le poids qu'on accorde
     # à chacune des proprietes, et minize est une liste de booléens selon qu'on veuille minimiser
@@ -300,37 +297,30 @@ class EvolutionModel():
     def fitness_func(self, prop_normalized):
         return np.apply_along_axis(self.fitness, 1, prop_normalized)
 
-    # Trie la population par F decroissant et renvoie cette population triée avec une nuovelle colonne qui represente 
-    # le fitness de chaque composition.
-
-    def stack_by_f(self, population,properties,F):
-        population_info = np.column_stack((population,properties,F))
-        sorted_arr = population_info[population_info[:, -1].argsort()][::-1]
-        return sorted_arr
-
     def init_properties(self, population):
         prop = self.prop_calculation(population)
         normalized_prop = self.normalize(prop)
         F = self.fitness_func(normalized_prop)
-        sorted_arr = self.stack_by_f(population, prop, F)
+        population_info = np.column_stack((population,prop,F))
+        sorted_arr = population_info[population_info[:, -1].argsort()][::-1]
         return sorted_arr
 
-    def compute_properties(self, generation):
+    def update_properties(self, generation):
         population_sorted = self.init_properties(generation[:, :20])
         return population_sorted
 
     def init_pop(self, N_population):
-        population,_=self.dbrho.better_random_composition(N_population,self.xmin,self.xmax)
+        population,_ = self.dbrho.better_random_composition(N_population,self.xmin,self.xmax)
         population = self.init_properties(population)
         self.generation = population
         return population
 
     def new_generation(self, old_generation):
         survivors,dads,moms = self.population_selection(old_generation)
-        child = bettermutation(self.crossover( dads, moms) , self.xmin, self.xmax)
+        child = self.mutation(self.crossover( dads, moms) , self.xmin, self.xmax)
         immigrants = self.init_pop(N_population - (len(survivors) + len(child)))
         new_population = np.vstack((np.vstack((survivors,child)),immigrants))
-        new_population = self.compute_properties(new_population)
+        new_population = self.update_properties(new_population)
         return new_population
 
     def evolution(self,N):
@@ -340,6 +330,7 @@ class EvolutionModel():
 
 data = EvolutionModel()
 data.load()
+data.mutation = bettermutation
 
 available_mat = ['SiO2', 'Al2O3', 'MgO', 'CaO', 'Na2O', 'K2O','ZnO', 'TiO2']
 
