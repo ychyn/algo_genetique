@@ -80,7 +80,7 @@ Charge les bases de données et les modèles ainsi que les fonction de passage d
 Renvoie les propriétés de la composition donnée sous la forme d'un tableau où chaque ligne correspond aux valeurs $\rho ,\, E ,\, T_g ,\, T_m$ du verre.
 - `normalize(self, prop)`  
 Normalise le tableau de propriétés du verre.
-- `fitness(self, property_normalized)`
+- `fitness(self, property_normalized)`  
 Renvoie la valeur de fitness pour les propriétés donnés.
 - `fitness_func(self, prop_normalized)`  
 Renvoie les valeurs de fitness pour le tableau de propriétés donné.
