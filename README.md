@@ -59,9 +59,10 @@ Les tableaux représentant les contraintes sur les composants à utiliser :
 - `self.xmin`
 - `self.xmax`
 
-La génération actuelle :
+Les penalités pour fitness function:
 
-- `self.generation`
+- `self.penalties_onMin_normalized`
+- `self.penalties_onMax_normalized`
 
 Les fonctions utilisées lors de passage d'une génération à l'autre :
 
@@ -77,80 +78,19 @@ Elle possède les méthodes suivantes :
 Charge les bases de données et les modèles ainsi que les fonction de passage de base
 - `prop_calculation(self, composition)`  
 Renvoie les propriétés de la composition donnée sous la forme d'un tableau où chaque ligne correspond aux valeurs $\rho ,\, E ,\, T_g ,\, T_m$ du verre.
-- `normalize(prop)`  
+- `normalize(self, prop)`  
 Normalise le tableau de propriétés du verre.
-- `fitness_func(prop_normalized,weight,minimize)`  
-Renvoie un tableau de valeurs de fitness associés aux propriétés. Les paramètres sont :
-    - `prop` est une array avec les propriétés normalisées du verre.
-    - `weight` est le poids qu'on accorde à chacune des propriétés.
-    - `minimize` est une liste de booléens qui vaut `True` si on veut minimiser la variable et `False` si on veut la maximiser.
-- `stack_by_f(population,properties,F)`  
-Renvoie la génération composée de la population, ses propriétés et les valeurs de F correspondantes.
-- `init_properties(population)`  
-Renvoie la génération correspondant à la population donnée.
-- `compute_properties(generation)`  
-Recalcule les propriétés et la valeur de F pour la génération donnée, puis la renvoie.
-- `init_pop(N_population)`  
+- `fitness(self, property_normalized)`
+Renvoie la valeur de fitness pour les propriétés donnés.
+- `fitness_func(self, prop_normalized)`  
+Renvoie les valeurs de fitness pour le tableau de propriétés donné.
+- `init_properties(self, population)`  
+Renvoie la génération correspondant à la population donnée, triée par les valeurs de fitness.
+- `update_properties(self, generation)`  
+Recalcule les propriétés pour la génération donnée, la trie par les valeurs de fitness et la renvoie.
+- `init_pop(self, N_population)`  
 Renvoie une génération aléatoire de la taille donnée.
-- `population_selection(generation)`  
-Renvoie 2 tableaux qui correspondent aux survivants et aux parents.
-- `crossover (parents)`  
-Renvoie les enfants en combinant des parents.
-- `mutation (mutants)`  
-Renvoie les individus en les mutant.
-- `new_generation(old_generation)`  
+- `new_generation(self, old_generation)`  
 Renvoie la génération suivante.
-- `evolution(generation,N)`  
-Renvoie la génération obtenue après `N` cycles à partir de la génération donnée.
-
-<!-- TODO : remove this portion -->
-### Fichier algo_genetique.ipynb
-
-Information générale :
-
-Dans cette fichier les générations sont représentés par des tableaux 2D où chaque ligne est de la forme :
-
-| Composition | Propriétés | Score de minimisation |
-| --- | --- | --- |
-| 'SiO2', 'B2O3', 'Al2O3', 'MgO', 'CaO', 'BaO', 'Li2O', 'Na2O', 'K2O', 'ZnO', 'SrO', 'PbO', 'Fe2O3', 'Y2O3', 'La2O3', 'TiO2', 'GeO2', 'ZrO2', 'P2O5', 'V2O5' | 'rho', 'E', 'Tg', 'Tmelt' | 'F' |
-
-Le tableau représentant chaque génération est trié dans l'ordre décroissant des 'F'.
-
-Les constantes :
-
-- `available_mat = ['SiO2', 'Al2O3', 'MgO', 'CaO', 'Na2O', 'K2O','ZnO', 'TiO2']`  
-La liste des oxydes disponibles.
-- `xmin`  
-La liste de fractions molaires minimales à utiliser.
-- `xmax`  
-La liste de fractions molaires maximales à utiliser.
-
-Les fonctions :
-
-- `prop_calculation(composition)`  
-Renvoie les propriétés de la composition donnée sous la forme d'un tableau où chaque ligne correspond aux valeurs $\rho ,\, E ,\, T_g ,\, T_m$ du verre.
-- `normalize(prop)`  
-Normalise le tableau de propriétés du verre.
-- `fitness_func(prop_normalized,weight,minimize)`  
-Renvoie un tableau de valeurs de fitness associés aux propriétés. Les paramètres sont :
-    - `prop` est une array avec les propriétés normalisées du verre.
-    - `weight` est le poids qu'on accorde à chacune des propriétés.
-    - `minimize` est une liste de booléens qui vaut `True` si on veut minimiser la variable et `False` si on veut la maximiser.
-- `stack_by_f(population,properties,F)`  
-Renvoie la génération composée de la population, ses propriétés et les valeurs de F correspondantes.
-- `init_properties(population)`  
-Renvoie la génération correspondant à la population donnée.
-- `compute_properties(generation)`  
-Recalcule les propriétés et la valeur de F pour la génération donnée, puis la renvoie.
-- `init_pop(N_population)`  
-Renvoie une génération aléatoire de la taille donnée.
-- `population_selection(generation)`  
-Renvoie 2 tableaux qui correspondent aux survivants et aux parents.
-- `crossover (parents)`  
-Renvoie les enfants en combinant des parents.
-- `mutation (mutants)`  
-Renvoie les individus en les mutant.
-- `new_generation(old_generation)`  
-Renvoie la génération suivante.
-- `evolution(generation,N)`  
-Renvoie la génération obtenue après `N` cycles à partir de la génération donnée.
+- `evolution(self, generation, N)`  
+Renvoie la génération obtenue après N cycles à partir de la génération donnée.

@@ -127,8 +127,6 @@ class EvolutionModel():
         self.xmax = None
         self.penalties_onMin_normalized = None
         self.penalties_onMax_normalized = None
-        
-        self.generation = None
 
         # Functions
         self.crossover = None
@@ -284,8 +282,6 @@ class EvolutionModel():
 
     def fitness(self, property_normalized):
         rating = 0
-        #print(penalties_onMin_normalized, property_normalized, penalties_onMax_normalized)
-        #print(np.all(penalties_onMin_normalized <= property_normalized) and np.all(penalties_onMax_normalized >= property_normalized))
         if np.all(self.penalties_onMin_normalized <= property_normalized) and np.all(self.penalties_onMax_normalized >= property_normalized):
             for i in range(len(weight)):
                 if minimize[i]:
@@ -312,7 +308,6 @@ class EvolutionModel():
     def init_pop(self, N_population):
         population,_ = self.dbrho.better_random_composition(N_population,self.xmin,self.xmax)
         population = self.init_properties(population)
-        self.generation = population
         return population
 
     def new_generation(self, old_generation):
@@ -323,10 +318,10 @@ class EvolutionModel():
         new_population = self.update_properties(new_population)
         return new_population
 
-    def evolution(self,N):
+    def evolution(self, generation, N):
         for _ in range(N):
-            self.generation = self.new_generation(self.generation)
-        return self.generation
+            generation = self.new_generation(generation)
+        return generation
 
 data = EvolutionModel()
 data.load()
@@ -357,7 +352,7 @@ data.xmax = xmax
 # Creation de generations
 
 initial_pop = data.init_pop(N_population)
-final_pop = data.evolution(N_generations)
+final_pop = data.evolution(initial_pop, N_generations)
 
 labels = data.dbrho.oxide
 prop_label = ['rho','E','Tg','Tmelt']
