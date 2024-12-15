@@ -84,11 +84,11 @@ Normalise le tableau de propriétés du verre.
 Renvoie la valeur de fitness pour les propriétés donnés.
 - `fitness_func(self, prop_normalized)`  
 Renvoie les valeurs de fitness pour le tableau de propriétés donné.
-- `init_properties(self, population)`  
+- `init_properties(self, composition)`  
 Renvoie la génération correspondant à la population donnée, triée par les valeurs de fitness.
 - `update_properties(self, generation)`  
 Recalcule les propriétés pour la génération donnée, la trie par les valeurs de fitness et la renvoie.
-- `init_pop(self, N_population)`  
+- `init_generation(self, N)`  
 Renvoie une génération aléatoire de la taille donnée.
 - `new_generation(self, old_generation)`  
 Renvoie la génération suivante.

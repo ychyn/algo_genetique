@@ -293,11 +293,11 @@ class EvolutionModel():
     def fitness_func(self, prop_normalized):
         return np.apply_along_axis(self.fitness, 1, prop_normalized)
 
-    def init_properties(self, population):
-        prop = self.prop_calculation(population)
+    def init_properties(self, composition):
+        prop = self.prop_calculation(composition)
         normalized_prop = self.normalize(prop)
         F = self.fitness_func(normalized_prop)
-        population_info = np.column_stack((population,prop,F))
+        population_info = np.column_stack((composition,prop,F))
         sorted_arr = population_info[population_info[:, -1].argsort()][::-1]
         return sorted_arr
 
@@ -305,15 +305,15 @@ class EvolutionModel():
         population_sorted = self.init_properties(generation[:, :20])
         return population_sorted
 
-    def init_pop(self, N_population):
-        population,_ = self.dbrho.better_random_composition(N_population,self.xmin,self.xmax)
+    def init_generation(self, N):
+        population,_ = self.dbrho.better_random_composition(N,self.xmin,self.xmax)
         population = self.init_properties(population)
         return population
 
     def new_generation(self, old_generation):
         survivors,dads,moms = self.population_selection(old_generation)
         child = self.mutation(self.crossover( dads, moms) , self.xmin, self.xmax)
-        immigrants = self.init_pop(N_population - (len(survivors) + len(child)))
+        immigrants = self.init_generation(N_population - (len(survivors) + len(child)))
         new_population = np.vstack((np.vstack((survivors,child)),immigrants))
         new_population = self.update_properties(new_population)
         return new_population
@@ -351,7 +351,7 @@ data.xmax = xmax
 
 # Creation de generations
 
-initial_pop = data.init_pop(N_population)
+initial_pop = data.init_generation(N_population)
 final_pop = data.evolution(initial_pop, N_generations)
 
 labels = data.dbrho.oxide
